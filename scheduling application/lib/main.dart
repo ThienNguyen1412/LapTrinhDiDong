@@ -4,7 +4,11 @@ import 'screens/home_screen.dart';     // Giữ nguyên
 import 'screens/login_screen.dart';    // Thêm màn hình Đăng nhập mới
 import 'screens/dashboard_screen.dart';// Thêm màn hình Dashboard mới
 import 'models/campus.dart';
-
+import 'screens/myappoinment_screen.dart';
+import 'screens/update_profile_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'screens/change_password_screen.dart';
+import 'screens/support_screen.dart';
 void main() {
   runApp(const DoctorApp()); 
 }
@@ -44,6 +48,16 @@ class DoctorApp extends StatelessWidget {
         // 3. Các màn hình cũ (giữ lại)
         // Lưu ý: Các route này có thể được truy cập từ bên trong DashBoard
         '/home': (context) => HomeScreen(), 
+        //Trang lịch hẹn
+        '/appointments': (context) => MyAppointmentsScreen(),
+        //Trang cập nhật thông tin
+        '/update_profile': (context) => UpdateProfileScreen(),
+        //Trang thông báo
+        '/notifications': (context) => NotificationsScreen(),
+        //Trang đổi mật khẩu
+        '/change_password': (context) => ChangePasswordScreen(),
+        //Trang hỗ trợ
+        '/support': (context) => SupportScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/details') {
