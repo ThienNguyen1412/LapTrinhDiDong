@@ -4,11 +4,7 @@ import 'screens/home_screen.dart';     // Giữ nguyên
 import 'screens/login_screen.dart';    // Thêm màn hình Đăng nhập mới
 import 'screens/dashboard_screen.dart';// Thêm màn hình Dashboard mới
 import 'models/campus.dart';
-import 'screens/myappoinment_screen.dart';
-import 'screens/update_profile_screen.dart';
-import 'screens/notifications_screen.dart';
-import 'screens/change_password_screen.dart';
-import 'screens/support_screen.dart';
+import 'screens/screens.dart';
 void main() {
   runApp(const DoctorApp()); 
 }
