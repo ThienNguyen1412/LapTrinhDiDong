@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="vd1_nguyenminhthien"
+        android:label="scheduling_application"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

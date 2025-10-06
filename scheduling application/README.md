@@ -1,4 +1,4 @@
-# vd1_nguyenminhthien
+# scheduling application
 
 A new Flutter project.
 

@@ -1,4 +1,4 @@
-package com.example.vd1_nguyenminhthien
+package com.example.scheduling_application
 
 import io.flutter.embedding.android.FlutterActivity
 
