@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'screens/details_screen.dart'; // Giữ nguyên
 import 'screens/home_screen.dart';     // Giữ nguyên
 import 'screens/login_screen.dart';    // Thêm màn hình Đăng nhập mới
-import 'screens/dashboard_screen.dart';// Thêm màn hình Dashboard mới
 import 'models/campus.dart';
 import 'screens/screens.dart';
 void main() {
@@ -54,6 +53,8 @@ class DoctorApp extends StatelessWidget {
         '/change_password': (context) => ChangePasswordScreen(),
         //Trang hỗ trợ
         '/support': (context) => SupportScreen(),
+        //Trang đăng ký
+        '/register': (context) => RegisterScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/details') {
