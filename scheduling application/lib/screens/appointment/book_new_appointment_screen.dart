@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/campus.dart'; // Chứa model Doctor
-import 'home_screen.dart'; // Chứa DoctorCard
+import '../../models/campus.dart'; // Chứa model Doctor
+import '../home/home_screen.dart'; // Chứa DoctorCard
 
 // 💥 CHUYỂN THÀNH STATEFUL WIDGET ĐỂ QUẢN LÝ TRẠNG THÁI LỌC
 class BookNewAppointmentScreen extends StatefulWidget {

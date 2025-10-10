@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/news.dart'; // Import model tin tức
+import '../../models/news.dart'; // Import model tin tức
 
 class NewsScreen extends StatelessWidget {
   const NewsScreen({super.key});

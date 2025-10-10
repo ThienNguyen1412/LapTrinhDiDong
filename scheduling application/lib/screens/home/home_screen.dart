@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/campus.dart'; 
+import '../../models/campus.dart'; 
 import 'details_screen.dart'; // Cần import DetailsScreen
 
 // 💥 CHUYỂN THÀNH STATEFUL WIDGET ĐỂ QUẢN LÝ TRẠNG THÁI LỌC

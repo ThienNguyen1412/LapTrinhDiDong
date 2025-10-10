@@ -1,22 +1,13 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'profile_screen.dart';
-import '../models/campus.dart';
-import 'news_screen.dart';
+import 'home/home_screen.dart';
+import 'profile/profile_screen.dart';
+import '../models/campus.dart'; // Chứa model Doctor
+import '../models/notification.dart'; // Import model AppNotification
+import 'news/news_screen.dart';
 // ⚠️ Đảm bảo file appointment_screen.dart chứa cả class Appointment MODEL
-import 'appointment_screen.dart'; 
-// Thêm import cho model Doctor nếu cần (Giả định nằm trong ../models/campus.dart)
-// import '../models/campus.dart'; 
-
-// --- Màn hình giả (Placeholder Screens) ---
-
-class NotificationScreen extends StatelessWidget {
-  const NotificationScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Nội dung Màn hình Thông báo'));
-  }
-}
+import 'appointment/appointment_screen.dart'; 
+// Import NotificationScreen đã được thiết kế
+import 'notification/notification_screen.dart'; 
 
 // ------------------------------------------
 
@@ -29,9 +20,9 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
-  int _nextAppointmentId = 2; // Dùng để tạo ID duy nhất
+  int _nextAppointmentId = 2; 
 
-  // 💥 QUẢN LÝ TRẠNG THÁI LỊCH HẸN
+  // 💥 1. QUẢN LÝ TRẠNG THÁI LỊCH HẸN
   List<Appointment> _appointments = [
     Appointment(
       id: 'appt1',
@@ -42,6 +33,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       status: 'upcoming'
     ),
   ];
+  
+  // 💥 2. QUẢN LÝ TRẠNG THÁI THÔNG BÁO
+  List<AppNotification> _notifications = AppNotification.initialNotifications();
 
   void _onItemTapped(int index) {
     setState(() {
@@ -49,7 +43,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  // 💥 HÀM THÊM LỊCH HẸN (dùng cho DetailsScreen)
+  // 💥 3. HÀM THÊM THÔNG BÁO (khi đặt lịch thành công)
+  void _addNotificationForAppointment(Doctor doctor) {
+    final newNotification = AppNotification(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: 'Lịch khám đã được đặt thành công! 🎉',
+      body: 'Bạn đã đặt lịch khám với Bác sĩ ${doctor.name}, chuyên khoa ${doctor.specialty} vào ngày 25/11/2025. Vui lòng kiểm tra mục Lịch hẹn.',
+      date: DateTime.now(),
+      isRead: false,
+    );
+
+    setState(() {
+      _notifications.add(newNotification);
+    });
+    
+    // Gọi hàm thêm lịch hẹn gốc
+    _addAppointment(doctor); 
+  }
+
+  // 💥 4. HÀM GỐC THÊM LỊCH HẸN (đã được tách ra)
   void _addAppointment(Doctor doctor) {
     final newAppointment = Appointment(
       id: 'appt${_nextAppointmentId++}',
@@ -64,14 +76,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _appointments.add(newAppointment);
     });
 
-    // Chuyển sang tab Lịch hẹn (Index 1) và hiển thị thông báo
+    // Chuyển sang tab Lịch hẹn (Index 1)
     _onItemTapped(1); 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('✅ Đặt lịch thành công với ${doctor.name} vào 25/11/2025')),
     );
   }
 
-  // 💥 HÀM XÓA LỊCH HẸN (dùng cho AppointmentScreen)
+  // 💥 5. HÀM ĐÁNH DẤU THÔNG BÁO ĐÃ ĐỌC
+  void _markNotificationAsRead(String id) {
+    setState(() {
+      final index = _notifications.indexWhere((noti) => noti.id == id);
+      if (index >= 0 && !_notifications[index].isRead) {
+        // Cập nhật bằng cách sử dụng copyWith (được định nghĩa trong model)
+        _notifications[index] = _notifications[index].copyWith(isRead: true);
+      }
+    });
+  }
+  
+  // 💥 6. HÀM XÓA VÀ SỬA LỊCH HẸN (Giữ nguyên)
   void _deleteAppointment(Appointment appt) {
     setState(() {
       _appointments.removeWhere((a) => a.id == appt.id);
@@ -81,30 +104,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // 💥 HÀM SỬA LỊCH HẸN (chỉ hiển thị thông báo, cần logic sửa thực tế)
   void _editAppointment(Appointment appt) {
-    // Trong thực tế, bạn sẽ mở một dialog hoặc chuyển đến trang Edit Appointment
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Mở form sửa lịch hẹn: ${appt.doctorName}')),
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
-    // 💥 CẬP NHẬT DANH SÁCH MÀN HÌNH ĐỂ TRUYỀN CALLBACKS VÀ DATA
+    
     final List<Widget> _screens = <Widget>[
-      // HomeScreen phải có khả năng điều hướng đến DetailsScreen và truyền _addAppointment
-      HomeScreen(onBookAppointment: _addAppointment), 
+      // HomeScreen gọi hàm thêm thông báo khi đặt lịch
+      HomeScreen(onBookAppointment: _addNotificationForAppointment), 
       
       // AppointmentScreen nhận data và callbacks
       AppointmentScreen(
         appointments: _appointments,
         onDelete: _deleteAppointment,
         onEdit: _editAppointment,
-        onBookAppointment: _addAppointment,
+        onBookAppointment: _addNotificationForAppointment, // Vẫn dùng hàm thêm thông báo
       ),
       NewsScreen(),
-      const NotificationScreen(),
+      
+      // 💥 NotificationScreen nhận danh sách và hàm đánh dấu đã đọc
+      NotificationScreen(
+        notifications: _notifications,
+        markAsRead: _markNotificationAsRead,
+      ),
       ProfileScreen(),
     ];
     

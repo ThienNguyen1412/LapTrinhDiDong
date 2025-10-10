@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:scheduling_application/models/campus.dart';
 import 'book_new_appointment_screen.dart'; 
+import 'appointment_detail_screen.dart'; // 💥 Thêm import này
 // ⚠️ Cần import các file cần thiết
 // import 'book_new_appointment_screen.dart'; 
 // import '../models/campus.dart'; // Nếu AppointmentScreen cần model Doctor
@@ -183,10 +184,12 @@ class AppointmentListView extends StatelessWidget {
               ],
             ),
             onTap: () {
-              // TODO: Điều hướng đến trang chi tiết lịch hẹn
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Xem chi tiết lịch: ${appointment.doctorName}')),
-              );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AppointmentDetailScreen(appointment: appointment),
+                  ),
+                );
             },
           ),
         );

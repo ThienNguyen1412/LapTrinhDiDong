@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // ⚠️ Cần đảm bảo rằng các import dưới đây trỏ đến file chính xác
-import 'screens/details_screen.dart'; 
-import 'screens/home_screen.dart';
+import 'screens/home/details_screen.dart'; 
+import 'screens/home/home_screen.dart';
 import 'screens/login_screen.dart'; 
 import 'screens/dashboard_screen.dart';
 import 'models/campus.dart'; // Chứa model Doctor
@@ -94,8 +94,3 @@ class DoctorApp extends StatelessWidget {
     );
   }
 }
-
-// ⚠️ GHI CHÚ QUAN TRỌNG: 
-// Đảm bảo rằng tất cả các màn hình phụ đã được thêm 'const' vào constructor
-// nếu chúng là StatelessWidget và không có tham số động.
-// Ví dụ: const MyAppointmentsScreen(), const UpdateProfileScreen(), v.v.
