@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/campus.dart'; // Chứa model Doctor
+import '../../models/doctor.dart'; // Chứa model Doctor
 import '../home/home_screen.dart'; // Chứa DoctorCard
 
 // 💥 CHUYỂN THÀNH STATEFUL WIDGET ĐỂ QUẢN LÝ TRẠNG THÁI LỌC

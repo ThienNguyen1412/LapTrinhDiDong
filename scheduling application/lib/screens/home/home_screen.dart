@@ -1,6 +1,16 @@
+// File: screens/home/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:scheduling_application/models/user.dart';
 import '../../models/campus.dart';
+import '../../models/doctor.dart'; 
+import '../home/details_screen.dart'; // Cần import DetailsScreen
+// 💥 Thêm các imports cho Thông báo
+import '../../models/notification.dart'; 
+import '../notification/notification_screen.dart'; // Giả định file này tồn tại
+
+// 💥 CHUYỂN THÀNH STATEFUL WIDGET ĐỂ QUẢN LÝ TRẠNG THÁI LỌC VÀ HIỂN THỊ THÔNG BÁO
+import '../../models/campus.dart'; 
 import 'details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -11,6 +21,16 @@ class HomeScreen extends StatefulWidget {
     super.key,
     required this.user,
     required this.onBookAppointment,
+  final void Function(Doctor) onBookAppointment; 
+  // 💥 THÊM THAM SỐ THÔNG BÁO TỪ DASHBOARD
+  final List<AppNotification> notifications; 
+  final Function(String) markNotificationAsRead; 
+
+  const HomeScreen({
+    super.key, 
+    required this.onBookAppointment,
+    required this.notifications, // Dữ liệu thông báo
+    required this.markNotificationAsRead, // Callback đánh dấu đã đọc
   });
 
   @override
@@ -18,12 +38,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Lấy dữ liệu bác sĩ từ model
   final List<Doctor> allDoctors = Doctor.getDoctors();
   // Trạng thái lọc: Lưu chuyên khoa đang được chọn (null = hiển thị mặc định)
   String? _selectedSpecialty;
+  String? _selectedSpecialty; 
 
-  // Danh sách mở rộng của các chuyên khoa (để hiển thị trong Grid)
   final List<Map<String, dynamic>> categories = const [
     {'name': 'Nhi khoa', 'icon': Icons.child_care},
     {'name': 'Mắt', 'icon': Icons.remove_red_eye},
@@ -37,21 +56,16 @@ class _HomeScreenState extends State<HomeScreen> {
     {'name': 'Sản phụ khoa', 'icon': Icons.pregnant_woman},
   ];
 
-  // Hàm thay đổi trạng thái lọc
   void _selectSpecialty(String specialty) {
     setState(() {
-      // Nếu nhấn lại chuyên khoa đã chọn, hủy chọn (hiển thị mặc định)
       _selectedSpecialty = (_selectedSpecialty == specialty) ? null : specialty;
     });
   }
 
-  // Lấy danh sách bác sĩ đã lọc
   List<Doctor> get _filteredDoctors {
     if (_selectedSpecialty == null) {
-      // Mặc định hiển thị 3 bác sĩ nổi bật (có thể thay đổi logic này)
       return allDoctors.take(3).toList();
     }
-    // Lọc theo chuyên khoa
     return allDoctors
         .where((doctor) => doctor.specialty == _selectedSpecialty)
         .toList();
@@ -75,6 +89,121 @@ class _HomeScreenState extends State<HomeScreen> {
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 4,
           childAspectRatio: 0.85,
+  
+  // ----------------------------------------------------
+  // I. CÁC HÀM XÂY DỰNG GIAO DIỆN CHÍNH
+  // ----------------------------------------------------
+
+  // 1. HEADER (Đã thêm logic Thông báo)
+  Widget _buildWelcomeHeader(BuildContext context) {
+    const userName = 'Nguyễn Minh Thiện'; 
+    // Tính toán số lượng thông báo chưa đọc
+    final unreadCount = widget.notifications.where((n) => !n.isRead).length;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Chào mừng trở lại 👋',
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+              Text(
+                userName,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Color(0xFF0D47A1)),
+              ),
+            ],
+          ),
+        ),
+        
+        // 💥 KHU VỰC THÔNG BÁO VÀ ẢNH ĐẠI DIỆN
+        Row(
+          children: [
+            // Icon Thông báo
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_none, size: 30, color: Colors.blue),
+                  onPressed: () {
+                    _showNotificationBottomSheet(context); // Mở Bottom Sheet
+                  }, 
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 20,
+                        minHeight: 20,
+                      ),
+                      child: Text(
+                        '$unreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 10),
+            
+            // Ảnh đại diện
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.blue[100],
+              child: const Icon(Icons.person, color: Colors.blue),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 2. THANH TÌM KIẾM
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const TextField(
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm Bác sĩ, Chuyên khoa, Bệnh viện...',
+          border: InputBorder.none,
+          prefixIcon: Icon(Icons.search, color: Colors.grey),
+        ),
+      ),
+    );
+  }
+  
+  // 3. GRID DANH MỤC
+  Widget _buildCategoryGrid() {
+    const double itemHeight = 90.0;
+    const double spacing = 10.0;
+    const double fixedHeight = (2 * itemHeight) + spacing; 
+
+    return SizedBox(
+      height: fixedHeight,
+      child: GridView.builder(
+        physics: const BouncingScrollPhysics(),
+        itemCount: categories.length, 
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4, 
+          childAspectRatio: 0.85, 
           crossAxisSpacing: spacing,
           mainAxisSpacing: spacing,
         ),
@@ -85,6 +214,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return GestureDetector(
             onTap: () => _selectSpecialty(categoryName), // Gọi hàm lọc
+          
+          return GestureDetector(
+            onTap: () => _selectSpecialty(categoryName),
             child: Column(
               children: [
                 CircleAvatar(
@@ -119,6 +251,104 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+                    category['icon'] as IconData, 
+                    color: isSelected ? Colors.white : Colors.blue, 
+                    size: 28
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Expanded(
+                  child: Text(
+                    categoryName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2, 
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // 4. BOTTOM SHEET THÔNG BÁO
+  void _showNotificationBottomSheet(BuildContext context) {
+    final sortedNotifications = List<AppNotification>.from(widget.notifications)
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7, 
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Thông Báo Của Bạn', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: sortedNotifications.isEmpty 
+                  ? const Center(child: Text('Không có thông báo mới.', style: TextStyle(color: Colors.grey)))
+                  : ListView.builder(
+                      itemCount: sortedNotifications.length,
+                      itemBuilder: (context, index) {
+                        final notification = sortedNotifications[index];
+                        return ListTile(
+                          leading: Icon(
+                            notification.isRead ? Icons.notifications_none : Icons.notifications_active,
+                            color: notification.isRead ? Colors.grey : Colors.red,
+                          ),
+                          title: Text(
+                            notification.title,
+                            style: TextStyle(fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '${notification.date.day}/${notification.date.month} | ${notification.body}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () {
+                            widget.markNotificationAsRead(notification.id); // Gọi callback đánh dấu đã đọc
+                            Navigator.pop(ctx); // Đóng bottom sheet
+                            // Mở màn hình chi tiết thông báo
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (c) => NotificationDetailScreen(notification: notification),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  // ----------------------------------------------------
+  // II. BUILD METHOD
+  // ----------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,7 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. HEADER - Khu vực Chào mừng
+            // 1. HEADER - Khu vực Chào mừng & Thông báo
             _buildWelcomeHeader(context),
             const SizedBox(height: 20),
 
@@ -147,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            _buildCategoryGrid(), // 💥 SỬ DỤNG GRID VIEW
+            _buildCategoryGrid(), 
             const SizedBox(height: 25),
 
             // 4. FEATURED DOCTORS - Bác sĩ nổi bật (Tiêu đề động)
@@ -155,6 +385,9 @@ class _HomeScreenState extends State<HomeScreen> {
               _selectedSpecialty == null
                   ? 'Bác sĩ nổi bật'
                   : 'Bác sĩ chuyên khoa ${_selectedSpecialty}', // Tiêu đề thay đổi theo filter
+              _selectedSpecialty == null 
+                ? 'Bác sĩ nổi bật'
+                : 'Bác sĩ chuyên khoa ${_selectedSpecialty}', 
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
@@ -170,6 +403,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
+            // Danh sách bác sĩ được liệt kê 
+            ..._filteredDoctors.map((doctor) => Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: DoctorCard(
+                  doctor: doctor,
+                  onBookAppointment: widget.onBookAppointment, 
+                ),
+              )),
+            
             if (_filteredDoctors.isEmpty)
               const Center(
                 child: Text('Không tìm thấy bác sĩ nào thuộc chuyên khoa này.'),
@@ -235,6 +477,10 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // --- WIDGET DOCTOR CARD (Cần giữ nguyên vì nó là StatefulWidget) ---
+}
+
+
+// --- WIDGET DOCTOR CARD (Giữ nguyên) ---
 
 /// Widget Card bác sĩ có hiệu ứng hover
 class DoctorCard extends StatefulWidget {
@@ -256,6 +502,7 @@ class _DoctorCardState extends State<DoctorCard> {
 
   @override
   Widget build(BuildContext context) {
+    // ... (Code DoctorCard giữ nguyên) ...
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
