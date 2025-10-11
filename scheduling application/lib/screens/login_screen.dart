@@ -46,8 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đăng nhập thành công!')),
       );
-      // Truyền user sang màn hình HomeScreen (hoặc Dashboard)
-      Navigator.pushReplacementNamed(context, '/home', arguments: user);
+      Navigator.pushReplacementNamed(context, '/dashboard', arguments: user);
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
