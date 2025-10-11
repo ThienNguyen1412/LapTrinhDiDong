@@ -8,6 +8,8 @@ import '../../models/notification.dart';
 import '../notification/notification_screen.dart'; // Giả định file này tồn tại
 
 // 💥 CHUYỂN THÀNH STATEFUL WIDGET ĐỂ QUẢN LÝ TRẠNG THÁI LỌC VÀ HIỂN THỊ THÔNG BÁO
+import '../../models/campus.dart'; 
+import 'details_screen.dart';
 class HomeScreen extends StatefulWidget {
   final void Function(Doctor) onBookAppointment; 
   // 💥 THÊM THAM SỐ THÔNG BÁO TỪ DASHBOARD

@@ -1,3 +1,5 @@
+export 'home/home_screen.dart';
+export 'home/details_screen.dart';
 export 'register_screen.dart';
 export 'dashboard_screen.dart';
 export 'appointment/myappoinment_screen.dart';
