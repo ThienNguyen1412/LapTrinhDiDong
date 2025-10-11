@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'screens/details_screen.dart'; // Giữ nguyên
-import 'screens/home_screen.dart';     // Giữ nguyên
 import 'screens/login_screen.dart';    // Thêm màn hình Đăng nhập mới
 import 'models/campus.dart';
 // ⚠️ Cần đảm bảo rằng các import dưới đây trỏ đến file chính xác
@@ -9,7 +7,7 @@ import 'screens/home/home_screen.dart';
 import 'screens/login_screen.dart'; 
 import 'screens/dashboard_screen.dart';
 import 'models/campus.dart'; // Chứa model Doctor
-
+import './screens/home/home_screen.dart';
 // Giả định rằng 'screens/screens.dart' chứa tất cả các màn hình khác
 // MyAppointmentsScreen, UpdateProfileScreen, NotificationsScreen, ChangePasswordScreen, SupportScreen
 // Nếu không, bạn cần import từng file riêng lẻ.
@@ -52,7 +50,8 @@ class DoctorApp extends StatelessWidget {
         
         // 3. Các màn hình cũ (giữ lại)
         // Lưu ý: Các route này có thể được truy cập từ bên trong DashBoard
-        '/home': (context) => HomeScreen(), 
+        
+        '/home': (context) => HomeScreen(onBookAppointment: (doctor) {},), 
         //Trang lịch hẹn
         '/appointments': (context) => MyAppointmentsScreen(),
         //Trang cập nhật thông tin

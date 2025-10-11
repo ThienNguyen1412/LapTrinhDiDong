@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/campus.dart'; 
-import 'details_screen.dart'; // Cần import DetailsScreen
-
-// 💥 CHUYỂN THÀNH STATEFUL WIDGET ĐỂ QUẢN LÝ TRẠNG THÁI LỌC
+import 'details_screen.dart';
 class HomeScreen extends StatefulWidget {
   final void Function(Doctor) onBookAppointment; 
 
@@ -20,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Danh sách mở rộng của các chuyên khoa (để hiển thị trong Grid)
   final List<Map<String, dynamic>> categories = const [
-    {'name': 'Nhi khoa', 'icon': Icons.child_care}, // Đổi 'Nhi' thành 'Nhi khoa' để khớp với specialty trong model
+    {'name': 'Nhi khoa', 'icon': Icons.child_care}, 
     {'name': 'Mắt', 'icon': Icons.remove_red_eye},
     {'name': 'Tai Mũi Họng', 'icon': Icons.hearing},
     {'name': 'Da Liễu', 'icon': Icons.self_improvement},

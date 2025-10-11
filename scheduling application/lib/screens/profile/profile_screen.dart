@@ -101,7 +101,7 @@ class ProfileScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.phone, size: 18, color: Colors.teal),
+                        const Icon(Icons.phone, size: 18, color: Colors.blue),
                         const SizedBox(width: 6),
                         Text(phone, style: const TextStyle(fontSize: 16)),
                       ],
@@ -120,7 +120,7 @@ class ProfileScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
-                      leading: Icon(feature.icon, color: Colors.teal),
+                      leading: Icon(feature.icon, color: Colors.blue),
                       title: Text(feature.title, style: const TextStyle(fontSize: 16)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: () => feature.onTap(),
