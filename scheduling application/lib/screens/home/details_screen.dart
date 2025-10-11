@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/campus.dart'; // Đảm bảo model Doctor đã được import
+import '../../models/doctor.dart'; // Đảm bảo model Doctor đã được import
 
 // ----------------------------------------------------
 // 1. MÀN HÌNH CHI TIẾT BÁC SĨ (DetailsScreen)

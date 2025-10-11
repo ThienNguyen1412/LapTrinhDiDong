@@ -1,13 +1,17 @@
+// File: dashboard_screen.dart
+
 import 'package:flutter/material.dart';
-import 'home/home_screen.dart';
+import 'home/home_screen.dart'; // Trang chủ (Index 0)
 import 'profile/profile_screen.dart';
-import '../models/campus.dart'; // Chứa model Doctor
-import '../models/notification.dart'; // Import model AppNotification
+import '../models/doctor.dart'; // Chứa model Doctor
+import '../models/notification.dart'; 
 import 'news/news_screen.dart';
-// ⚠️ Đảm bảo file appointment_screen.dart chứa cả class Appointment MODEL
 import 'appointment/appointment_screen.dart'; 
-// Import NotificationScreen đã được thiết kế
 import 'notification/notification_screen.dart'; 
+import 'service/service_screen.dart'; // Màn hình Dịch vụ (Index 2)
+
+// Giả định Model Appointment đã được định nghĩa và có thể import/sử dụng
+// Nếu Appointment chưa được định nghĩa, bạn cần tạo một model Appointment.
 
 // ------------------------------------------
 
@@ -22,7 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   int _nextAppointmentId = 2; 
 
-  // 💥 1. QUẢN LÝ TRẠNG THÁI LỊCH HẸN
+  // 1. QUẢN LÝ TRẠNG THÁI LỊCH HẸN
   List<Appointment> _appointments = [
     Appointment(
       id: 'appt1',
@@ -34,7 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ),
   ];
   
-  // 💥 2. QUẢN LÝ TRẠNG THÁI THÔNG BÁO
+  // 2. QUẢN LÝ TRẠNG THÁI THÔNG BÁO
   List<AppNotification> _notifications = AppNotification.initialNotifications();
 
   void _onItemTapped(int index) {
@@ -43,7 +47,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  // 💥 3. HÀM THÊM THÔNG BÁO (khi đặt lịch thành công)
+  // HÀM ĐÁNH DẤU THÔNG BÁO ĐÃ ĐỌC
+  void _markNotificationAsRead(String id) {
+    setState(() {
+      final index = _notifications.indexWhere((noti) => noti.id == id);
+      if (index >= 0 && !_notifications[index].isRead) {
+        _notifications[index] = _notifications[index].copyWith(isRead: true);
+      }
+    });
+  }
+
+  // HÀM GỐC THÊM LỊCH HẸN
+  void _addAppointment(Doctor doctor) {
+    final newAppointment = Appointment(
+      id: 'appt${_nextAppointmentId++}',
+      doctorName: doctor.name,
+      specialty: doctor.specialty,
+      date: '25/11/2025',
+      time: '10:00 AM',
+      status: 'upcoming',
+    );
+    
+    setState(() {
+      _appointments.add(newAppointment);
+    });
+
+    _onItemTapped(1); // Chuyển sang tab Lịch hẹn (Index 1)
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('✅ Đặt lịch thành công với ${doctor.name} vào 25/11/2025')),
+    );
+  }
+
+  // HÀM THÊM THÔNG BÁO (khi đặt lịch thành công)
   void _addNotificationForAppointment(Doctor doctor) {
     final newNotification = AppNotification(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -57,44 +92,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _notifications.add(newNotification);
     });
     
-    // Gọi hàm thêm lịch hẹn gốc
     _addAppointment(doctor); 
   }
-
-  // 💥 4. HÀM GỐC THÊM LỊCH HẸN (đã được tách ra)
-  void _addAppointment(Doctor doctor) {
-    final newAppointment = Appointment(
-      id: 'appt${_nextAppointmentId++}',
-      doctorName: doctor.name,
-      specialty: doctor.specialty,
-      date: '25/11/2025', // Ngày/Giờ giả định
-      time: '10:00 AM',
-      status: 'upcoming',
-    );
-    
-    setState(() {
-      _appointments.add(newAppointment);
-    });
-
-    // Chuyển sang tab Lịch hẹn (Index 1)
-    _onItemTapped(1); 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('✅ Đặt lịch thành công với ${doctor.name} vào 25/11/2025')),
-    );
-  }
-
-  // 💥 5. HÀM ĐÁNH DẤU THÔNG BÁO ĐÃ ĐỌC
-  void _markNotificationAsRead(String id) {
-    setState(() {
-      final index = _notifications.indexWhere((noti) => noti.id == id);
-      if (index >= 0 && !_notifications[index].isRead) {
-        // Cập nhật bằng cách sử dụng copyWith (được định nghĩa trong model)
-        _notifications[index] = _notifications[index].copyWith(isRead: true);
-      }
-    });
-  }
   
-  // 💥 6. HÀM XÓA VÀ SỬA LỊCH HẸN (Giữ nguyên)
   void _deleteAppointment(Appointment appt) {
     setState(() {
       _appointments.removeWhere((a) => a.id == appt.id);
@@ -114,25 +114,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     
+    // Danh sách 6 màn hình theo thứ tự: [Trang chủ, Lịch hẹn, Dịch vụ, Tin tức, Thông báo, Hồ sơ]
     final List<Widget> _screens = <Widget>[
-      // HomeScreen gọi hàm thêm thông báo khi đặt lịch
-      HomeScreen(onBookAppointment: _addNotificationForAppointment), 
+      // 0. Trang Chủ 
+      // 💥 SỬA LỖI: CẦN TRUYỀN ĐỦ THAM SỐ CHO HOMESCREEN MỚI
+      HomeScreen(
+        onBookAppointment: _addNotificationForAppointment, 
+        notifications: _notifications,
+        markNotificationAsRead: _markNotificationAsRead,
+      ), 
       
-      // AppointmentScreen nhận data và callbacks
+      // 1. Lịch hẹn
       AppointmentScreen(
         appointments: _appointments,
         onDelete: _deleteAppointment,
         onEdit: _editAppointment,
-        onBookAppointment: _addNotificationForAppointment, // Vẫn dùng hàm thêm thông báo
+        onBookAppointment: _addNotificationForAppointment, 
       ),
-      NewsScreen(),
       
-      // 💥 NotificationScreen nhận danh sách và hàm đánh dấu đã đọc
-      NotificationScreen(
-        notifications: _notifications,
-        markAsRead: _markNotificationAsRead,
+      // 2. Dịch vụ (Sử dụng ServiceScreen)
+      ServiceScreen(
+        onBookAppointment: _addNotificationForAppointment, 
+        unreadNotifications: _notifications, 
+        markNotificationAsRead: _markNotificationAsRead, 
       ),
-      ProfileScreen(),
+
+      // 3. Tin tức
+      const NewsScreen(),
+    
+      
+      // 4. Hồ sơ
+      const ProfileScreen(),
     ];
     
     return Scaffold(
@@ -144,11 +156,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Lịch hẹn'),
-          BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Tin tức'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Thông báo'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Hồ sơ'),
+          // 6 mục trong Bottom Navigation Bar
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'), 
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Lịch hẹn'), 
+          BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Dịch vụ'), 
+          BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Tin tức'), 
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Hồ sơ'), 
         ],
       ),
     );
