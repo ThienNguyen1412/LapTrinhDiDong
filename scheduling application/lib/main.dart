@@ -9,33 +9,23 @@ import 'screens/dashboard_screen.dart'; // Màn hình chính
 import 'models/doctor.dart'; // Cần nếu DoctorApp muốn truyền Doctor object (nhưng không cần cho main)
 import 'screens/screens.dart'; // Chứa các màn hình phụ (MyAppointmentsScreen, RegisterScreen, v.v.)
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';    // Thêm màn hình Đăng nhập mới
+import 'package:scheduling_application/models/user.dart';
+import 'screens/login_screen.dart';
 import 'models/campus.dart';
-// ⚠️ Cần đảm bảo rằng các import dưới đây trỏ đến file chính xác
-import 'screens/home/details_screen.dart'; 
-import 'screens/home/home_screen.dart';
-import 'screens/login_screen.dart'; 
-import 'screens/dashboard_screen.dart';
-import 'models/campus.dart'; // Chứa model Doctor
-import './screens/home/home_screen.dart';
-// Giả định rằng 'screens/screens.dart' chứa tất cả các màn hình khác
-// MyAppointmentsScreen, UpdateProfileScreen, NotificationsScreen, ChangePasswordScreen, SupportScreen
-// Nếu không, bạn cần import từng file riêng lẻ.
 import 'screens/screens.dart';
 
 void main() {
-  runApp(const DoctorApp()); 
+  runApp(const DoctorApp());
 }
 
 class DoctorApp extends StatelessWidget {
-  const DoctorApp({super.key}); 
+  const DoctorApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Ứng dụng Đặt lịch Khám bệnh',
-      
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
@@ -47,6 +37,9 @@ class DoctorApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
       
       initialRoute: '/login', 
       
@@ -88,6 +81,36 @@ class DoctorApp extends StatelessWidget {
         '/notifications': (context) => const NotificationsScreen(),
         '/change_password': (context) => const ChangePasswordScreen(),
         '/support': (context) => const SupportScreen(),
+        '/register': (context) => const RegisterScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/home') {
+          final user = settings.arguments as User;
+          return MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              user: user,
+              onBookAppointment: (doctor) {}, // truyền callback nếu cần
+            ),
+          );
+        }
+        if (settings.name == '/details') {
+          final doctor = settings.arguments as Doctor;
+          return MaterialPageRoute(
+            builder: (context) => DetailsScreen(
+              doctor: doctor,
+              onBookAppointment: (_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Không thể đặt lịch qua named route! Vui lòng dùng Navigator.push.',
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }
+        return null;
       },
       
       // 💥 BỎ onGenerateRoute: Vì bạn nên dùng Navigator.push trực tiếp (như đã làm trong DoctorCard)
