@@ -1,19 +1,13 @@
-import 'package:flutter/material.dart';
-import 'screens/details_screen.dart'; // Giữ nguyên
-import 'screens/home_screen.dart';     // Giữ nguyên
-import 'screens/login_screen.dart';    // Thêm màn hình Đăng nhập mới
-import 'models/campus.dart';
-// ⚠️ Cần đảm bảo rằng các import dưới đây trỏ đến file chính xác
-import 'screens/home/details_screen.dart'; 
-import 'screens/home/home_screen.dart';
-import 'screens/login_screen.dart'; 
-import 'screens/dashboard_screen.dart';
-import 'models/campus.dart'; // Chứa model Doctor
+// File: main.dart
 
-// Giả định rằng 'screens/screens.dart' chứa tất cả các màn hình khác
-// MyAppointmentsScreen, UpdateProfileScreen, NotificationsScreen, ChangePasswordScreen, SupportScreen
-// Nếu không, bạn cần import từng file riêng lẻ.
-import 'screens/screens.dart';
+import 'package:flutter/material.dart';
+// 💥 KHÔNG CẦN import details_screen.dart và home_screen.dart nếu không dùng route trực tiếp
+// import 'screens/home/details_screen.dart'; 
+// import 'screens/home/home_screen.dart'; 
+import 'screens/login_screen.dart'; // Màn hình Đăng nhập
+import 'screens/dashboard_screen.dart'; // Màn hình chính
+import 'models/doctor.dart'; // Cần nếu DoctorApp muốn truyền Doctor object (nhưng không cần cho main)
+import 'screens/screens.dart'; // Chứa các màn hình phụ (MyAppointmentsScreen, RegisterScreen, v.v.)
 
 void main() {
   runApp(const DoctorApp()); 
@@ -29,8 +23,7 @@ class DoctorApp extends StatelessWidget {
       title: 'Ứng dụng Đặt lịch Khám bệnh',
       
       theme: ThemeData(
-        // Giữ nguyên Theme hiện đại
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue), // Đổi màu chính sang xanh dương
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
         fontFamily: 'Roboto',
         appBarTheme: const AppBarTheme(
@@ -43,37 +36,14 @@ class DoctorApp extends StatelessWidget {
       
       initialRoute: '/login', 
       
+      // 💥 TỐI ƯU HÓA ROUTES: Chỉ giữ lại các entry point chính và các màn hình phụ được gọi từ Profile/Settings.
       routes: {
-        // 1. Màn hình Đăng nhập
+        // ENTRY POINTS
         '/login': (context) => const LoginScreen(), 
-        
-        // 2. Màn hình chính (Dashboard chứa BottomNavigationBar)
         '/dashboard': (context) => const DashboardScreen(),
         
-        // 3. Các màn hình cũ (giữ lại)
-        // Lưu ý: Các route này có thể được truy cập từ bên trong DashBoard
-        '/home': (context) => HomeScreen(), 
-        //Trang lịch hẹn
-        '/appointments': (context) => MyAppointmentsScreen(),
-        //Trang cập nhật thông tin
-        '/update_profile': (context) => UpdateProfileScreen(),
-        //Trang thông báo
-        '/notifications': (context) => NotificationsScreen(),
-        //Trang đổi mật khẩu
-        '/change_password': (context) => ChangePasswordScreen(),
-        //Trang hỗ trợ
-        '/support': (context) => SupportScreen(),
-        //Trang đăng ký
-        '/register': (context) => RegisterScreen(),
-        // 3. Các màn hình phụ truy cập từ ProfileScreen/Settings (Nếu không dùng Navigator.push)
-        '/home': (context) => HomeScreen(onBookAppointment: (doctor) {
-            // ⚠️ Cần truyền hàm xử lý đặt lịch nếu bạn muốn truy cập /home trực tiếp
-            // Tuy nhiên, việc này không cần thiết vì HomeScreen đã được nhúng trong Dashboard.
-            // Nếu vẫn muốn giữ, cần cung cấp logic
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Không thể đặt lịch khi truy cập Home trực tiếp qua route!'))
-            );
-          }), 
+        // MÀN HÌNH PHỤ (Truy cập từ Profile/Settings)
+        '/register': (context) => const RegisterScreen(),
         '/appointments': (context) => const MyAppointmentsScreen(),
         '/update_profile': (context) => const UpdateProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
@@ -81,35 +51,8 @@ class DoctorApp extends StatelessWidget {
         '/support': (context) => const SupportScreen(),
       },
       
-      // ⚠️ Cập nhật onGenerateRoute
-      // Route /details không cần thiết nữa vì đã dùng Navigator.push trong DoctorCard
-      // Tuy nhiên, nếu bạn muốn giữ lại cơ chế này cho Route, bạn phải truyền callback
-      // qua arguments, điều này rất phức tạp và không được khuyến khích.
-      // Chúng ta sẽ giữ lại logic cơ bản, nhưng lưu ý rằng nó KHÔNG ĐỦ để đặt lịch hẹn.
-      onGenerateRoute: (settings) {
-        if (settings.name == '/details') {
-          // Lấy doctor object
-          final doctor = settings.arguments as Doctor;
-          
-          // Tạo một hàm callback giả định: Vì bạn không thể truyền callback qua named routes dễ dàng,
-          // việc sử dụng route này sẽ KHÔNG hỗ trợ chức năng đặt lịch. 
-          // Nếu bạn muốn đặt lịch, bạn PHẢI dùng Navigator.push như đã cập nhật trong HomeScreen.
-          // Tốt nhất là BỎ ROUTE NÀY VÀ CHỈ DÙNG NAVIGATOR.PUSH.
-
-          return MaterialPageRoute(
-            builder: (context) => DetailsScreen(
-              doctor: doctor,
-              // ⚠️ Cần cung cấp một hàm xử lý (dummy function)
-              onBookAppointment: (_) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Không thể đặt lịch qua named route! Vui lòng dùng Navigator.push.')),
-                );
-              },
-            ),
-          );
-        }
-        return null;
-      },
+      // 💥 BỎ onGenerateRoute: Vì bạn nên dùng Navigator.push trực tiếp (như đã làm trong DoctorCard)
+      // để truyền Doctor object và callback đặt lịch cho DetailsScreen.
     );
   }
 }
