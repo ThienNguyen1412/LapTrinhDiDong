@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/user.dart';
+import '../services/auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,6 +14,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
+  bool _isLoading = false;
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) return 'Vui lòng nhập email';
@@ -26,13 +29,30 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      // Đăng nhập thành công
-      Navigator.pushReplacementNamed(context, '/dashboard');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Đăng nhập thành công!')));
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    final authService = AuthService();
+    final user = await authService.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (user != null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đăng nhập thành công!')),
+      );
+      // Truyền user sang màn hình HomeScreen (hoặc Dashboard)
+      Navigator.pushReplacementNamed(context, '/home', arguments: user);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!')),
+      );
     }
   }
 
@@ -77,8 +97,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _login,
-                    child: const Text('Đăng nhập'),
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Đăng nhập'),
                   ),
                 ),
                 const SizedBox(height: 8),
