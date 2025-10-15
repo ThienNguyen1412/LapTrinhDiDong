@@ -1,59 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:scheduling_application/models/doctor.dart';
-import 'book_new_appointment_screen.dart'; 
-import 'appointment_detail_screen.dart'; // 💥 Thêm import này
-// ⚠️ Cần import các file cần thiết
-// import 'book_new_appointment_screen.dart'; 
-// import '../models/campus.dart'; // Nếu AppointmentScreen cần model Doctor
+import '../../models/doctor.dart';
+import 'book_new_appointment_screen.dart';
+import 'appointment_detail_screen.dart';
+import '../../models/appointment.dart' as model;
 
-// --- APPOINTMENT MODEL (Giữ nguyên) ---
-class Appointment {
-  final String id;
-  final String doctorName;
-  final String specialty;
-  final String date;
-  final String time;
-  final String status;
-
-  Appointment({
-    required this.id,
-    required this.doctorName,
-    required this.specialty,
-    required this.date,
-    required this.time,
-    this.status = 'upcoming',
-  });
-}
-
-// --- APPOINTMENT SCREEN (Widget Chính) ĐÃ CẬP NHẬT ---
+// --- WIDGET CHÍNH ---
 class AppointmentScreen extends StatelessWidget {
-  final List<Appointment> appointments;
-  final Function(Appointment) onDelete;
-  final Function(Appointment) onEdit;
-  // 💥 THÊM CALLBACK FUNCTION
-  final void Function(Doctor) onBookAppointment; // Dùng dynamic vì có thể là Doctor
+  final List<model.Appointment> appointments;
+  final Function(model.Appointment) onDelete;
+  final Function(model.Appointment) onEdit;
+  final void Function(Doctor) onBookAppointment;
 
+  // ✨ SỬA LỖI: Cập nhật constructor với `super.key`
   const AppointmentScreen({
     super.key,
     required this.appointments,
     required this.onDelete,
     required this.onEdit,
-    required this.onBookAppointment, // Bắt buộc
+    required this.onBookAppointment,
   });
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3, 
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Lịch Hẹn'),
-          backgroundColor: Colors.blue,
+          backgroundColor: Colors.blue.shade800,
           elevation: 0,
+          automaticallyImplyLeading: false, // Bỏ nút back
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Sắp tới'),
-              Tab(text: 'Đã hoàn thành'),
+              Tab(text: 'Hoàn thành'),
               Tab(text: 'Đã hủy'),
             ],
             indicatorColor: Colors.white,
@@ -61,10 +41,9 @@ class AppointmentScreen extends StatelessWidget {
             unselectedLabelColor: Colors.white70,
           ),
         ),
-
-        // Body chứa nội dung của các Tab (giữ nguyên)
         body: TabBarView(
           children: [
+            // Truyền các hàm và dữ liệu xuống AppointmentListView
             AppointmentListView(
               appointments: appointments,
               onDelete: onDelete,
@@ -85,21 +64,18 @@ class AppointmentScreen extends StatelessWidget {
             ),
           ],
         ),
-
-        // 💥 CẬP NHẬT FLOATING ACTION BUTTON
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            // Điều hướng đến màn hình chọn bác sĩ (BookNewAppointmentScreen)
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => BookNewAppointmentScreen(
-                  onBookAppointment: onBookAppointment, // Truyền callback
+                  onBookAppointment: onBookAppointment,
                 ),
               ),
             );
           },
-          label: const Text('Đặt lịch'),
+          label: const Text('Đặt Lịch Mới'),
           icon: const Icon(Icons.add),
           backgroundColor: Colors.blueAccent,
         ),
@@ -108,13 +84,14 @@ class AppointmentScreen extends StatelessWidget {
   }
 }
 
-// --- APPOINTMENT LIST VIEW (Giữ nguyên) ---
+// --- WIDGET HIỂN THỊ DANH SÁCH ---
 class AppointmentListView extends StatelessWidget {
-  final List<Appointment> appointments;
-  final Function(Appointment) onDelete;
-  final Function(Appointment) onEdit;
+  final List<model.Appointment> appointments;
+  final Function(model.Appointment) onDelete;
+  final Function(model.Appointment) onEdit;
   final String statusFilter;
 
+  // ✨ SỬA LỖI: Cập nhật constructor với `super.key`
   const AppointmentListView({
     super.key,
     required this.appointments,
@@ -125,71 +102,98 @@ class AppointmentListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Lọc danh sách theo trạng thái (giữ nguyên)
-    final filteredAppointments = appointments.where((a) => a.status == statusFilter).toList();
+    final filteredAppointments =
+        appointments.where((a) => a.status == statusFilter).toList();
 
     if (filteredAppointments.isEmpty) {
       return Center(
-        child: Text(
-          'Không có lịch hẹn $statusFilter nào.',
-          style: const TextStyle(color: Colors.grey, fontSize: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.calendar_today_outlined,
+                size: 60, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            const Text(
+              'Không có lịch hẹn nào.',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          ],
         ),
       );
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 80.0),
       itemCount: filteredAppointments.length,
       itemBuilder: (context, index) {
         final appointment = filteredAppointments[index];
-        
+
         Color statusColor;
-        switch(statusFilter) {
-          case 'upcoming': statusColor = Colors.blue; break;
-          case 'completed': statusColor = Colors.green; break;
-          case 'cancelled': statusColor = Colors.red; break;
-          default: statusColor = Colors.grey;
+        IconData statusIcon;
+        switch (statusFilter) {
+          case 'upcoming':
+            statusColor = Colors.blue;
+            statusIcon = Icons.pending_actions;
+            break;
+          case 'completed':
+            statusColor = Colors.green;
+            statusIcon = Icons.check_circle;
+            break;
+          case 'cancelled':
+            statusColor = Colors.red;
+            statusIcon = Icons.cancel;
+            break;
+          default:
+            statusColor = Colors.grey;
+            statusIcon = Icons.help_outline;
         }
 
         return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          elevation: 2,
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          elevation: 3,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: statusColor,
-              child: const Icon(Icons.person, color: Colors.white),
+              // ✨ SỬA LỖI: Thay thế `withOpacity` bằng `withAlpha`
+              // 0.1 opacity tương đương với alpha là 26
+              backgroundColor: statusColor.withAlpha(26),
+              child: Icon(statusIcon, color: statusColor),
             ),
             title: Text(
               appointment.doctorName,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              '${appointment.specialty}\nNgày: ${appointment.date} | Giờ: ${appointment.time}',
+              '${appointment.specialty}\n${appointment.date} lúc ${appointment.time}',
             ),
             isThreeLine: true,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (statusFilter == 'upcoming')
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.orange),
-                    onPressed: () => onEdit(appointment),
-                    tooltip: 'Sửa lịch hẹn',
-                  ),
-                
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => onDelete(appointment),
-                  tooltip: 'Xóa lịch hẹn',
-                ),
-              ],
-            ),
+            trailing: (statusFilter == 'upcoming')
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_calendar_outlined,
+                            color: Colors.orange),
+                        onPressed: () => onEdit(appointment),
+                        tooltip: 'Sửa lịch hẹn',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => onDelete(appointment),
+                        tooltip: 'Hủy lịch hẹn',
+                      ),
+                    ],
+                  )
+                : null,
             onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AppointmentDetailScreen(appointment: appointment),
-                  ),
-                );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      AppointmentDetailScreen(appointment: appointment),
+                ),
+              );
             },
           ),
         );

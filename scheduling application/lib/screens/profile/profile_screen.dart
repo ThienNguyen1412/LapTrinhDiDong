@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+// 💥 Import màn hình Admin Dashboard (Giả định)
+import '../admin_home_screen.dart'; 
 
 class ProfileScreen extends StatelessWidget {
+  // 💥 Cờ giả định để kiểm tra quyền Admin
+  final bool isAdmin = true; // Đặt là true để thấy nút
+
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     // Thông tin mẫu
-    const String name = 'Nguyễn Minh Thiện';
+    const String name = 'Nguyễn Minh Thiện (Admin)';
     const String email = 'thiennguyen@gmail.com';
     const String phone = '0901 234 567';
     const String avatarUrl =
         'https://img.lovepik.com/free-png/20220101/lovepik-tortoise-png-image_401154498_wh860.png';
 
-    // Danh sách chức năng
+    // Danh sách chức năng cơ bản
     final List<_ProfileFeature> features = [
       _ProfileFeature(
         icon: Icons.person,
@@ -51,9 +56,32 @@ class ProfileScreen extends StatelessWidget {
       ),
     ];
 
+    // 💥 Thêm chức năng Admin nếu là Admin
+    if (isAdmin) {
+      features.insert(0, 
+        _ProfileFeature(
+          icon: Icons.admin_panel_settings,
+          title: 'Truy Cập Admin Dashboard',
+          onTap: () {
+            // Điều hướng tới màn hình Admin Dashboard
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (c) => const AdminHomeScreen(),
+              ),
+            );
+          },
+          // 💥 Tùy chỉnh màu sắc để nổi bật
+          color: Colors.red.shade700, 
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hồ sơ'),
+        backgroundColor: Colors.teal, // Thống nhất màu sắc AppBar
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -61,7 +89,7 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () {
               Navigator.pushNamedAndRemoveUntil(
                 context,
-                '/login',
+                '/login', // Giả định route đăng nhập là '/login'
                 (route) => false,
               );
             },
@@ -71,6 +99,7 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // Phần Thông tin người dùng (Giữ nguyên)
             Card(
               elevation: 4,
               margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -110,7 +139,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // Các chức năng
+            // Các chức năng (Đã cập nhật)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -120,8 +149,15 @@ class ProfileScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
-                      leading: Icon(feature.icon, color: Colors.teal),
-                      title: Text(feature.title, style: const TextStyle(fontSize: 16)),
+                      leading: Icon(feature.icon, color: feature.color ?? Colors.teal), // Sử dụng màu tùy chỉnh
+                      title: Text(
+                        feature.title, 
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: feature.color != null ? FontWeight.bold : FontWeight.normal,
+                          color: feature.color ?? Colors.black, // Sử dụng màu tùy chỉnh
+                        ),
+                      ),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                       onTap: () => feature.onTap(),
                     ),
@@ -136,15 +172,17 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-// Model chức năng
+// Model chức năng (ĐÃ CẬP NHẬT THÊM THUỘC TÍNH MÀU SẮC)
 class _ProfileFeature {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
+  final Color? color; // 💥 Thêm thuộc tính màu sắc
 
   _ProfileFeature({
     required this.icon,
     required this.title,
     required this.onTap,
+    this.color, // Có thể null
   });
 }

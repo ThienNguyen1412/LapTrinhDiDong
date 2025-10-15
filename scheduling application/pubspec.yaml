@@ -16,7 +16,9 @@ dependencies:
   http: ^1.5.0
 
   vietqr_gen: ^1.2.0 
-  qr_flutter: ^4.1.0 
+  qr_flutter: ^4.1.0
+  fl_chart: ^0.68.0 
+  uuid: ^4.0.0
   
   # Thư viện cho định dạng tiền tệ (cần thiết cho formattedPrice trong model)
   # Nếu bạn đã cài đặt thư viện này ở đâu đó, không cần thêm, 
