@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-//import 'package:http/http.dart' as http;
+import '../services/auth.dart'; // Đảm bảo đường dẫn đúng với dự án của bạn
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -14,6 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _obscure = true;
+  bool _isLoading = false;
 
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) return 'Vui lòng nhập họ tên';
@@ -38,13 +40,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
-  void _register() {
-    if (_formKey.currentState!.validate()) {
-      // Xử lý đăng ký ở đây (gọi API)
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    final authService = AuthService();
+    final result = await authService.register(
+      _nameController.text.trim(),
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
+    setState(() => _isLoading = false);
+
+    if (result) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đăng ký thành công!')),
       );
-      Navigator.pop(context); // Quay lại màn hình đăng nhập
+      Navigator.pop(context);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đăng ký thất bại. Email đã tồn tại hoặc có lỗi xảy ra.')),
+      );
     }
   }
 
@@ -106,8 +124,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _register,
-                    child: const Text('Đăng ký'),
+                    onPressed: _isLoading ? null : _register,
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24, height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Đăng ký'),
                   ),
                 ),
               ],
