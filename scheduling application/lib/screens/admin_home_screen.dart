@@ -1,7 +1,8 @@
+// File: screens/admin/admin_home_screen.dart
+
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart'; 
-// Import các file cần thiết
-import '../models/appointment.dart'; // Giả định Appointment model
+import 'package:fl_chart/fl_chart.dart';
+import '../../data/mock_database.dart'; 
 import 'admin_appointment/admin_appointment_screen.dart'; 
 import 'admin_doctor/admin_doctor_screen.dart';
 
@@ -30,24 +31,10 @@ class _AdminDashboardHome extends StatefulWidget {
 class _AdminDashboardHomeState extends State<_AdminDashboardHome> {
   int _selectedIndex = 0; 
   
-  // 💥 QUẢN LÝ DỮ LIỆU LỊCH HẸN (MỚI)
-  List<Appointment> _appointments = [
-    // Lịch hẹn chờ xử lý (Pending)
-    Appointment(id: '1001', doctorName: 'BS. Hùng', specialty: 'Răng Hàm Mặt', date: '20/10/2025', time: '09:00 AM', status: 'Pending'),
-    Appointment(id: '1002', doctorName: 'BS. Lan', specialty: 'Nhi khoa', date: '21/10/2025', time: '14:30 PM', status: 'Pending'),
-    // Lịch hẹn đã Xác nhận
-    Appointment(id: '1003', doctorName: 'BS. Minh', specialty: 'Tim mạch', date: '22/10/2025', time: '10:00 AM', status: 'Confirmed'),
-  ];
-  
-  // 💥 HÀM CẬP NHẬT TRẠNG THÁI LỊCH HẸN (MỚI)
   void _updateAppointmentStatus(String id, String newStatus) {
     setState(() {
-      final index = _appointments.indexWhere((app) => app.id == id);
-      if (index != -1) {
-        _appointments[index].status = newStatus;
-      }
+      MockDatabase.instance.updateAppointmentStatus(id, newStatus);
     });
-    // Hiển thị thông báo (tùy chọn)
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Cập nhật lịch hẹn #$id thành: $newStatus'),
@@ -57,15 +44,27 @@ class _AdminDashboardHomeState extends State<_AdminDashboardHome> {
   }
 
   List<Map<String, dynamic>> get _adminFeatures {
+    const int baseAppointmentCount = 141;
+
+    final newPendingCount = MockDatabase.instance.appointments
+        .where((app) => app.status == 'Pending')
+        .length;
+
+    final totalDisplayCount = baseAppointmentCount + newPendingCount;
+    final String newAppointmentsDisplay = '$newPendingCount ($totalDisplayCount)';
+
     return [
-      {'title': 'Thống kê & Báo cáo', 'icon': Icons.dashboard, 'body': DashboardContent()}, 
-      // 💥 ĐÃ CẬP NHẬT: Thay Placeholder bằng AdminAppointmentScreen
+      {
+        'title': 'Thống kê & Báo cáo', 
+        'icon': Icons.dashboard, 
+        'body': DashboardContent(newAppointmentsDisplay: newAppointmentsDisplay)
+      }, 
       {
         'title': 'Quản lý Lịch hẹn', 
         'icon': Icons.calendar_month, 
         'body': AdminAppointmentScreen(
-          pendingAppointments: _appointments, // Truyền toàn bộ list
-          updateAppointmentStatus: _updateAppointmentStatus, // Truyền hàm xử lý
+          appointments: MockDatabase.instance.appointments, 
+          updateAppointmentStatus: _updateAppointmentStatus,
         )
       },
       {
@@ -89,16 +88,6 @@ class _AdminDashboardHomeState extends State<_AdminDashboardHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Builder(
-          builder: (context) {
-            return IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            );
-          },
-        ),
         title: Text(_adminFeatures[_selectedIndex]['title']),
         backgroundColor: Colors.red.shade700, 
         foregroundColor: Colors.white,
@@ -133,6 +122,7 @@ class _AdminDashboardHomeState extends State<_AdminDashboardHome> {
                     color: index == _selectedIndex ? Colors.red.shade700 : Colors.black,
                   ),
                 ),
+                selectedTileColor: Colors.red.withOpacity(0.1),
                 selected: index == _selectedIndex,
                 onTap: () => _onItemTapped(index),
               );
@@ -142,7 +132,6 @@ class _AdminDashboardHomeState extends State<_AdminDashboardHome> {
               leading: const Icon(Icons.logout, color: Colors.grey),
               title: const Text('Thoát'),
               onTap: () {
-                // Xử lý logic thoát/đăng xuất
                 Navigator.pop(context); 
                 if (Navigator.canPop(context)) {
                     Navigator.pop(context); 
@@ -162,8 +151,12 @@ class _AdminDashboardHomeState extends State<_AdminDashboardHome> {
 // 3. Nội dung cho Dashboard Thống kê
 // ----------------------------------------------------
 class DashboardContent extends StatelessWidget {
-  DashboardContent({super.key});
+  // 6. Nhận chuỗi hiển thị từ bên ngoài
+  final String newAppointmentsDisplay;
 
+  DashboardContent({super.key, required this.newAppointmentsDisplay});
+
+  // ... (Code còn lại của DashboardContent giữ nguyên)
   final Map<String, int> _serviceData = {
     'Kiểm tra Sức khỏe Tổng quát Cơ bản': 450, 
     'Gói Chăm Sóc Gia Đình': 200,
@@ -184,7 +177,7 @@ class DashboardContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, size: 30, color: color),
-            const SizedBox(height: 8),
+            const Spacer(),
             Text(
               value,
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
@@ -202,8 +195,7 @@ class DashboardContent extends StatelessWidget {
   ];
 
   PieChartData pieChartData() {
-    // int total = _serviceData.values.fold(0, (sum, item) => sum + item); // Không dùng
-    List<PieChartSectionData> sections = [];
+     List<PieChartSectionData> sections = [];
     int i = 0;
 
     _serviceData.forEach((title, value) {
@@ -215,13 +207,6 @@ class DashboardContent extends StatelessWidget {
           value: value.toDouble(),
           title: '', 
           radius: isLargest ? 45 : 40, 
-          titleStyle: TextStyle(
-            fontSize: isLargest ? 12 : 10,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            shadows: isLargest ? [const Shadow(color: Colors.black, blurRadius: 2)] : [],
-          ),
-          // Thay thế phần trăm bằng Widget Text để tránh lỗi (vì không có giá trị phần trăm)
           badgeWidget: isLargest ? const Icon(Icons.star, color: Colors.yellow, size: 16) : null, 
           badgePositionPercentageOffset: isLargest ? 1.05 : null,
         ),
@@ -264,17 +249,12 @@ class DashboardContent extends StatelessWidget {
   }
 
   String _truncateString(String text, int maxLength) {
-    if (text.length <= maxLength) {
-      return text;
-    }
+    if (text.length <= maxLength) return text;
     return '${text.substring(0, maxLength - 3)}...';
   }
 
-  // -----------------------------------------------------------------------------------------
-  // LineChartData mainData() - Giữ nguyên (Vì nó đã được tối ưu hóa để không gây lỗi)
-  // -----------------------------------------------------------------------------------------
   LineChartData mainData() {
-    const dataColor = Colors.lightBlueAccent;
+        const dataColor = Colors.lightBlueAccent;
 
     return LineChartData(
       gridData: FlGridData(
@@ -282,38 +262,20 @@ class DashboardContent extends StatelessWidget {
         drawVerticalLine: true,
         horizontalInterval: 3000, 
         verticalInterval: 1,
-        getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: Colors.white.withOpacity(0.15),
-            strokeWidth: 1,
-          );
-        },
-        getDrawingVerticalLine: (value) {
-          return FlLine(
-            color: Colors.white.withOpacity(0.15),
-            strokeWidth: 1,
-          );
-        },
+        getDrawingHorizontalLine: (value) => FlLine(color: Colors.white.withOpacity(0.15), strokeWidth: 1),
+        getDrawingVerticalLine: (value) => FlLine(color: Colors.white.withOpacity(0.15), strokeWidth: 1),
       ),
       titlesData: FlTitlesData(
         show: true,
-        rightTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
-        topTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
+        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
             reservedSize: 30,
             interval: 1, 
             getTitlesWidget: (value, meta) {
-              const style = TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Colors.white, 
-              );
+              const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white);
               Widget text;
               switch (value.toInt()) {
                 case 0: text = const Text('T1', style: style); break;
@@ -330,11 +292,7 @@ class DashboardContent extends StatelessWidget {
                 case 11: text = const Text('T12', style: style); break;
                 default: text = const Text('', style: style); break;
               }
-              return SideTitleWidget(
-                axisSide: meta.axisSide,
-                space: 8.0,
-                child: text,
-              );
+              return SideTitleWidget(axisSide: meta.axisSide, space: 8.0, child: text);
             },
           ),
         ),
@@ -343,37 +301,21 @@ class DashboardContent extends StatelessWidget {
             showTitles: true,
             interval: 3000, 
             getTitlesWidget: (value, meta) {
-              const style = TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Colors.white, 
-              );
+              const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white);
               String text;
-              if (value == 0) {
-                text = '0';
-              } else if (value == 3000) {
-                text = '30M';
-              } else if (value == 6000) {
-                text = '60M';
-              } else if (value == 9000) {
-                text = '90M';
-              } else {
-                return Container();
-              }
+              if (value == 0) text = '0';
+              else if (value == 3000) text = '30M';
+              else if (value == 6000) text = '60M';
+              else if (value == 9000) text = '90M';
+              else return Container();
               return Text(text, style: style, textAlign: TextAlign.left);
             },
             reservedSize: 40,
           ),
         ),
       ),
-      borderData: FlBorderData(
-        show: true,
-        border: Border.all(color: Colors.white.withOpacity(0.15)),
-      ),
-      minX: 0,
-      maxX: 11, 
-      minY: 0,
-      maxY: 10000, 
+      borderData: FlBorderData(show: true, border: Border.all(color: Colors.white.withOpacity(0.15))),
+      minX: 0, maxX: 11, minY: 0, maxY: 10000, 
       lineBarsData: [
         LineChartBarData(
           spots: const [
@@ -387,23 +329,13 @@ class DashboardContent extends StatelessWidget {
           isStrokeCapRound: true,
           dotData: FlDotData( 
             show: true, 
-            getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-              radius: 4,
-              color: dataColor, 
-              strokeWidth: 1,
-              strokeColor: Colors.white
-            )
+            getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(radius: 4, color: dataColor, strokeWidth: 1, strokeColor: Colors.white)
           ),
-          belowBarData: BarAreaData(
-            show: true,
-            color: dataColor.withOpacity(0.3),
-          ),
+          belowBarData: BarAreaData(show: true, color: dataColor.withOpacity(0.3)),
         ),
       ],
     );
   }
-  // -----------------------------------------------------------------------------------------
-
 
   @override
   Widget build(BuildContext context) {
@@ -412,48 +344,38 @@ class DashboardContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Thống kê tổng quan (Tuần này)',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
+          const Text('Thống kê tổng quan',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 15),
-          
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
+            childAspectRatio: 1.2,
             children: [
-              _buildStatCard('Lịch hẹn mới', '45', Icons.pending_actions, Colors.blue),
-              _buildStatCard('Tổng Bác sĩ', '72', Icons.person_add_alt_1, Colors.green),
-              _buildStatCard('Người dùng mới', '3,500', Icons.group_add, Colors.orange),
-              _buildStatCard('Doanh thu (tháng)', '120 Triệu', Icons.monetization_on, Colors.red),
+              // 7. Sử dụng chuỗi đã nhận để hiển thị
+              _buildStatCard(
+                  'Lịch hẹn hôm nay', newAppointmentsDisplay, Icons.pending_actions, Colors.blue),
+              _buildStatCard('Tổng Bác sĩ', '72',
+                  Icons.medical_services_outlined, Colors.green),
+              _buildStatCard(
+                  'Người dùng mới', '3,500', Icons.group_add, Colors.orange),
+              _buildStatCard(
+                  'Doanh thu (tháng)', '120 Triệu', Icons.monetization_on, Colors.red),
             ],
           ),
           
           const Divider(height: 40),
-          
-          // BIỂU ĐỒ TRÒN - THỐNG KÊ DỊCH VỤ 
-          const Text(
-            'Tần suất đặt dịch vụ của khách hàng',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          const Text('Tần suất đặt dịch vụ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 1,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 5, offset: const Offset(0, 3))],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,10 +394,7 @@ class DashboardContent extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Chú giải:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      const Text('Chú giải:', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       ..._serviceData.entries.toList().asMap().entries.map((entry) {
                         int index = entry.key;
@@ -489,64 +408,32 @@ class DashboardContent extends StatelessWidget {
               ],
             ),
           ),
-
           const Divider(height: 40),
-          
-          // BIỂU ĐỒ DOANH THU 
-          const Text(
-            'Biến động Doanh thu 12 tháng gần nhất',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          const Text('Biến động Doanh thu', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
-            'Biểu đồ thể hiện tổng doanh thu đạt được theo từng tháng (Đơn vị: Triệu VNĐ).',
-            style: TextStyle(fontSize: 14, color: Colors.black87),
-          ),
+          const Text('Biểu đồ thể hiện tổng doanh thu theo tháng (Đơn vị: Triệu VNĐ).', style: TextStyle(fontSize: 14, color: Colors.black87)),
           const SizedBox(height: 10),
           Container(
             height: 200,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: const Color(0xff232d37), 
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: const Color(0xff232d37)),
             child: Padding(
               padding: const EdgeInsets.only(right: 18.0, left: 12.0, top: 24, bottom: 12),
-              child: LineChart(
-                mainData(),
-              ),
+              child: LineChart(mainData()),
             ),
           ),
-          
           const Divider(height: 40),
-
-          // Hoạt động gần đây (Recent Activities) 
-          const Text(
-            'Hoạt động gần đây',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          const Text('Hoạt động gần đây', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             child: const Column(
               children: [
-                ListTile(
-                  leading: Icon(Icons.check_circle, color: Colors.green),
-                  title: Text('Xác nhận lịch hẹn #1234 của Nguyễn Văn A.'),
-                  subtitle: Text('10 phút trước'),
-                ),
+                ListTile(leading: Icon(Icons.check_circle, color: Colors.green), title: Text('Xác nhận lịch hẹn #1234 của Nguyễn Văn A.'), subtitle: Text('10 phút trước')),
                 Divider(height: 0),
-                ListTile(
-                  leading: Icon(Icons.person_add, color: Colors.blue),
-                  title: Text('Người dùng mới đăng ký: Trần Thị B.'),
-                  subtitle: Text('2 giờ trước'),
-                ),
+                ListTile(leading: Icon(Icons.person_add, color: Colors.blue), title: Text('Người dùng mới đăng ký: Trần Thị B.'), subtitle: Text('2 giờ trước')),
                 Divider(height: 0),
-                ListTile(
-                  leading: Icon(Icons.attach_money, color: Colors.amber),
-                  title: Text('Thanh toán thành công gói khám: 990.000 VNĐ.'),
-                  subtitle: Text('5 giờ trước'),
-                ),
+                ListTile(leading: Icon(Icons.attach_money, color: Colors.amber), title: Text('Thanh toán thành công gói khám: 990.000 VNĐ.'), subtitle: Text('5 giờ trước')),
               ],
             ),
           ),
@@ -557,15 +444,14 @@ class DashboardContent extends StatelessWidget {
   }
 }
 
-
 // ----------------------------------------------------
-// 5. Màn hình Placeholder cho các chức năng quản lý khác
+// 5. Màn hình Placeholder
 // ----------------------------------------------------
 class PlaceholderScreen extends StatelessWidget {
   final String title;
   final Color color;
   
-  const PlaceholderScreen._internal({super.key, required this.title, required this.color});
+  const PlaceholderScreen._internal({ required this.title, required this.color});
   
   factory PlaceholderScreen.create(String title, Color color) {
     return PlaceholderScreen._internal(title: title, color: color);
@@ -579,10 +465,9 @@ class PlaceholderScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: color.withOpacity(0.5))
-          ),
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: color.withOpacity(0.5))),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -591,7 +476,8 @@ class PlaceholderScreen extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
+                style: TextStyle(
+                    fontSize: 24, fontWeight: FontWeight.bold, color: color),
               ),
               const SizedBox(height: 8),
               const Text(

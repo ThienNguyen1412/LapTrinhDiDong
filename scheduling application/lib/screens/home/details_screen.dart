@@ -1,3 +1,5 @@
+// File: screens/home/details_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../models/doctor.dart'; // Đảm bảo model Doctor đã được import
 
@@ -6,7 +8,8 @@ import '../../models/doctor.dart'; // Đảm bảo model Doctor đã được im
 // ----------------------------------------------------
 class DetailsScreen extends StatelessWidget {
   final Doctor doctor;
-  final void Function(Doctor) onBookAppointment; 
+  // ✨ CẬP NHẬT: Thay đổi chữ ký của hàm để nhận cả BookingDetails
+  final void Function(Doctor, BookingDetails) onBookAppointment; 
   
   const DetailsScreen({
     super.key, 
@@ -18,23 +21,26 @@ class DetailsScreen extends StatelessWidget {
   void _showBookingForm(BuildContext context, Doctor doctor) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Cho phép cuộn để tránh bàn phím che khuất
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
         return Padding(
           padding: EdgeInsets.only(
-            // Đẩy bottom sheet lên khi bàn phím xuất hiện
             bottom: MediaQuery.of(context).viewInsets.bottom, 
           ),
           child: BookingFormModal(
             doctor: doctor,
             onConfirm: (bookingDetails) {
-              // Sau khi form được điền và xác nhận, gọi callback chính
               Navigator.pop(context); // Đóng modal
-              onBookAppointment(doctor); // Gọi hàm đặt lịch chính
+              
+              // ✨ SỬA LỖI QUAN TRỌNG: Truyền cả `doctor` và `bookingDetails` lên trên
+              onBookAppointment(doctor, bookingDetails); 
               
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Đã đặt lịch khám với Bác sĩ ${doctor.name} vào ngày ${bookingDetails.date.day}/${bookingDetails.date.month}.'),
+                  content: Text('Đã gửi yêu cầu đặt lịch với Bác sĩ ${doctor.name}.'),
                   duration: const Duration(seconds: 3),
                 ),
               );
@@ -50,7 +56,7 @@ class DetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(doctor.name),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -174,7 +180,6 @@ class DetailsScreen extends StatelessWidget {
                 width: double.infinity, 
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // 💥 GỌI HÀM HIỂN THỊ FORM
                     _showBookingForm(context, doctor);
                   },
                   icon: const Icon(Icons.calendar_today),
@@ -183,7 +188,7 @@ class DetailsScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 16),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.blue.shade700,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -245,10 +250,9 @@ class _BookingFormModalState extends State<BookingFormModal> {
   final _addressController = TextEditingController();
   final _noteController = TextEditingController();
 
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1)); // Mặc định ngày mai
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0); // Mặc định 9:00 sáng
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
 
-  // Hàm hiển thị Date Picker
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -263,7 +267,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
     }
   }
 
-  // Hàm hiển thị Time Picker
   Future<void> _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -297,7 +300,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // Tiêu đề
               Center(
                 child: Text(
                   'Đặt Lịch Khám Bác sĩ ${widget.doctor.name}',
@@ -305,13 +307,9 @@ class _BookingFormModalState extends State<BookingFormModal> {
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Thông tin bác sĩ
               Text('Chuyên khoa: ${widget.doctor.specialty}', style: const TextStyle(fontSize: 16)),
               Text('Bệnh viện: ${widget.doctor.hospital}', style: const TextStyle(fontSize: 16)),
               const Divider(height: 25),
-
-              // Họ tên
               _buildTextField(
                 controller: _nameController,
                 label: 'Họ tên bệnh nhân (*)',
@@ -319,8 +317,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
                 validator: (value) => (value == null || value.isEmpty) ? 'Vui lòng nhập họ tên' : null,
               ),
               const SizedBox(height: 15),
-
-              // Số điện thoại
               _buildTextField(
                 controller: _phoneController,
                 label: 'Số điện thoại (*)',
@@ -329,8 +325,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
                 validator: (value) => (value == null || value.isEmpty) ? 'Vui lòng nhập số điện thoại' : null,
               ),
               const SizedBox(height: 15),
-
-              // Địa chỉ
               _buildTextField(
                 controller: _addressController,
                 label: 'Địa chỉ (*)',
@@ -338,8 +332,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
                 validator: (value) => (value == null || value.isEmpty) ? 'Vui lòng nhập địa chỉ' : null,
               ),
               const SizedBox(height: 20),
-
-              // Ngày đến khám
               Text('Ngày đến khám (*):', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               _buildDateTimeButton(
@@ -348,8 +340,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
                 onPressed: _selectDate,
               ),
               const SizedBox(height: 15),
-
-              // Giờ khám bệnh
               Text('Giờ khám bệnh (*):', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               _buildDateTimeButton(
@@ -358,8 +348,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
                 onPressed: _selectTime,
               ),
               const SizedBox(height: 20),
-
-              // Ghi chú
               _buildTextField(
                 controller: _noteController,
                 label: 'Ghi chú (Tùy chọn)',
@@ -368,8 +356,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
                 validator: (value) => null,
               ),
               const SizedBox(height: 30),
-
-              // Nút Xác nhận Đặt lịch
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -402,7 +388,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
     );
   }
 
-  // Widget helper cho TextFormField
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -425,7 +410,6 @@ class _BookingFormModalState extends State<BookingFormModal> {
     );
   }
 
-  // Widget helper cho Date/Time Button
   Widget _buildDateTimeButton({
     required IconData icon,
     required String text,

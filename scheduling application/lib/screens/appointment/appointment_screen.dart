@@ -1,17 +1,19 @@
+// File: screens/appointment/appointment_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../models/doctor.dart';
 import 'book_new_appointment_screen.dart';
 import 'appointment_detail_screen.dart';
 import '../../models/appointment.dart' as model;
+import '../home/details_screen.dart';
 
 // --- WIDGET CHÍNH ---
 class AppointmentScreen extends StatelessWidget {
   final List<model.Appointment> appointments;
   final Function(model.Appointment) onDelete;
   final Function(model.Appointment) onEdit;
-  final void Function(Doctor) onBookAppointment;
+  final void Function(Doctor, BookingDetails) onBookAppointment;
 
-  // ✨ SỬA LỖI: Cập nhật constructor với `super.key`
   const AppointmentScreen({
     super.key,
     required this.appointments,
@@ -23,18 +25,20 @@ class AppointmentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4, // 4 tabs
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Lịch Hẹn'),
+          title: const Text('Lịch Hẹn Của Bạn'),
           backgroundColor: Colors.blue.shade800,
           elevation: 0,
-          automaticallyImplyLeading: false, // Bỏ nút back
+          automaticallyImplyLeading: false,
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
-              Tab(text: 'Sắp tới'),
-              Tab(text: 'Hoàn thành'),
-              Tab(text: 'Đã hủy'),
+              Tab(text: 'Chờ Xử Lý'),
+              Tab(text: 'Đã Xác Nhận'),
+              Tab(text: 'Đã Hoàn Thành'),
+              Tab(text: 'Đã Hủy'),
             ],
             indicatorColor: Colors.white,
             labelColor: Colors.white,
@@ -43,24 +47,33 @@ class AppointmentScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            // Truyền các hàm và dữ liệu xuống AppointmentListView
+            // Tab 1: Chỉ hiển thị 'Pending'
             AppointmentListView(
               appointments: appointments,
               onDelete: onDelete,
               onEdit: onEdit,
-              statusFilter: 'upcoming',
+              statusFilter: const ['Pending'], 
             ),
+            // Tab 2: Chỉ hiển thị 'Confirmed'
             AppointmentListView(
               appointments: appointments,
               onDelete: onDelete,
               onEdit: onEdit,
-              statusFilter: 'completed',
+              statusFilter: const ['Confirmed'],
             ),
+            // Tab 3: Chỉ hiển thị 'Completed'
             AppointmentListView(
               appointments: appointments,
               onDelete: onDelete,
               onEdit: onEdit,
-              statusFilter: 'cancelled',
+              statusFilter: const ['Completed'], 
+            ),
+            // Tab 4: Chỉ hiển thị 'Canceled'
+            AppointmentListView(
+              appointments: appointments,
+              onDelete: onDelete,
+              onEdit: onEdit,
+              statusFilter: const ['Canceled'], 
             ),
           ],
         ),
@@ -89,9 +102,8 @@ class AppointmentListView extends StatelessWidget {
   final List<model.Appointment> appointments;
   final Function(model.Appointment) onDelete;
   final Function(model.Appointment) onEdit;
-  final String statusFilter;
+  final List<String> statusFilter;
 
-  // ✨ SỬA LỖI: Cập nhật constructor với `super.key`
   const AppointmentListView({
     super.key,
     required this.appointments,
@@ -99,11 +111,42 @@ class AppointmentListView extends StatelessWidget {
     required this.onEdit,
     required this.statusFilter,
   });
+  
+    // HÀM HIỂN THỊ HỘP THOẠI XÁC NHẬN HỦY
+  void _showCancelConfirmationDialog(BuildContext context, model.Appointment appointment) {
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('Xác nhận hủy'),
+          content: const Text('Bạn có chắc chắn muốn hủy lịch hẹn này không?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Không'),
+              onPressed: () {
+                Navigator.of(ctx).pop(); // Đóng dialog
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Hủy Lịch Hẹn'),
+              onPressed: () {
+                onDelete(appointment); // Gọi hàm xóa/hủy
+                Navigator.of(ctx).pop(); // Đóng dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Lọc dựa trên danh sách các trạng thái được phép
     final filteredAppointments =
-        appointments.where((a) => a.status == statusFilter).toList();
+        appointments.where((a) => statusFilter.contains(a.status)).toList();
 
     if (filteredAppointments.isEmpty) {
       return Center(
@@ -130,16 +173,20 @@ class AppointmentListView extends StatelessWidget {
 
         Color statusColor;
         IconData statusIcon;
-        switch (statusFilter) {
-          case 'upcoming':
-            statusColor = Colors.blue;
-            statusIcon = Icons.pending_actions;
+        switch (appointment.status) {
+          case 'Pending':
+            statusColor = Colors.orange;
+            statusIcon = Icons.hourglass_top_rounded;
             break;
-          case 'completed':
+          case 'Confirmed':
+            statusColor = Colors.blue;
+            statusIcon = Icons.check_circle_outline_rounded;
+            break;
+          case 'Completed':
             statusColor = Colors.green;
             statusIcon = Icons.check_circle;
             break;
-          case 'cancelled':
+          case 'Canceled':
             statusColor = Colors.red;
             statusIcon = Icons.cancel;
             break;
@@ -155,8 +202,6 @@ class AppointmentListView extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: ListTile(
             leading: CircleAvatar(
-              // ✨ SỬA LỖI: Thay thế `withOpacity` bằng `withAlpha`
-              // 0.1 opacity tương đương với alpha là 26
               backgroundColor: statusColor.withAlpha(26),
               child: Icon(statusIcon, color: statusColor),
             ),
@@ -168,7 +213,7 @@ class AppointmentListView extends StatelessWidget {
               '${appointment.specialty}\n${appointment.date} lúc ${appointment.time}',
             ),
             isThreeLine: true,
-            trailing: (statusFilter == 'upcoming')
+            trailing: (appointment.status == 'Pending' || appointment.status == 'Confirmed')
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -180,7 +225,7 @@ class AppointmentListView extends StatelessWidget {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () => onDelete(appointment),
+                        onPressed: () => _showCancelConfirmationDialog(context, appointment),
                         tooltip: 'Hủy lịch hẹn',
                       ),
                     ],
@@ -191,7 +236,11 @@ class AppointmentListView extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      AppointmentDetailScreen(appointment: appointment),
+                      AppointmentDetailScreen(
+                        appointment: appointment,
+                        onEdit: onEdit,
+                        onDelete: onDelete,
+                      ),
                 ),
               );
             },

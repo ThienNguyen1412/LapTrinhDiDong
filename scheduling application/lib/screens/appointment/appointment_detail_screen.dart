@@ -1,13 +1,59 @@
 // File: screens/appointment/appointment_detail_screen.dart
 
 import 'package:flutter/material.dart';
-// ✨ SỬA LỖI: Import model Appointment từ đúng file
 import '../../models/appointment.dart';
 
 class AppointmentDetailScreen extends StatelessWidget {
   final Appointment appointment;
+  final Function(Appointment) onEdit;
+  final Function(Appointment) onDelete;
 
-  const AppointmentDetailScreen({super.key, required this.appointment});
+  const AppointmentDetailScreen({
+    super.key, 
+    required this.appointment,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  // HÀM HIỂN THỊ HỘP THOẠI XÁC NHẬN HỦY
+  void _showCancelConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Text('Xác nhận hủy'),
+          content: const Text('Bạn có chắc chắn muốn hủy lịch hẹn này không? Thao tác này không thể hoàn tác.'),
+          actions: [
+            TextButton(
+              child: const Text('Không'),
+              onPressed: () {
+                Navigator.of(ctx).pop(); // Chỉ đóng dialog
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Hủy Lịch Hẹn'),
+              onPressed: () {
+                // ✨ SỬA LỖI TẠI ĐÂY
+                onDelete(appointment); // 1. Gọi hàm xóa (sẽ tự gọi setState)
+                Navigator.of(ctx).pop(); // 2. Đóng dialog
+
+                // 3. ✨ KHÔNG GỌI Navigator.of(context).pop() Ở ĐÂY NỮA
+                // Thay vào đó, chúng ta sẽ pop màn hình này sau khi dialog đã đóng hoàn toàn
+                // Sử dụng `Future.delayed` để đảm bảo an toàn
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.of(context).pop();
+                  }
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,17 +62,22 @@ class AppointmentDetailScreen extends StatelessWidget {
     IconData statusIcon;
 
     switch (appointment.status) {
-      case 'upcoming':
-        statusColor = Colors.blue;
-        statusText = 'Sắp tới';
-        statusIcon = Icons.pending_actions;
+      case 'Pending':
+        statusColor = Colors.orange;
+        statusText = 'Chờ xác nhận';
+        statusIcon = Icons.hourglass_top_rounded;
         break;
-      case 'completed':
+      case 'Confirmed':
+        statusColor = Colors.blue;
+        statusText = 'Đã xác nhận';
+        statusIcon = Icons.check_circle_outline_rounded;
+        break;
+      case 'Completed':
         statusColor = Colors.green;
         statusText = 'Đã hoàn thành';
         statusIcon = Icons.check_circle;
         break;
-      case 'cancelled':
+      case 'Canceled':
         statusColor = Colors.red;
         statusText = 'Đã hủy';
         statusIcon = Icons.cancel;
@@ -43,13 +94,13 @@ class AppointmentDetailScreen extends StatelessWidget {
         backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
       ),
-      backgroundColor: Colors.grey[50], // Màu nền nhẹ
+      backgroundColor: Colors.grey[50],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- ✨ CẢI TIẾN: Sử dụng Card để nhóm thông tin ---
+            // --- THÔNG TIN LỊCH HẸN VÀ BÁC SĨ ---
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -57,7 +108,6 @@ class AppointmentDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    // --- Phần Trạng thái và Ngày giờ ---
                     Row(
                       children: [
                         Icon(statusIcon, color: statusColor, size: 30),
@@ -67,8 +117,7 @@ class AppointmentDetailScreen extends StatelessWidget {
                           children: [
                             Text(
                               statusText,
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold, color: statusColor),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: statusColor),
                             ),
                             const SizedBox(height: 5),
                             Text(
@@ -80,13 +129,30 @@ class AppointmentDetailScreen extends StatelessWidget {
                       ],
                     ),
                     const Divider(height: 30),
-                    // --- Phần Thông tin Bác sĩ ---
-                    _buildDetailRow(
-                        'Bác sĩ', appointment.doctorName, Icons.person_outline),
-                    _buildDetailRow(
-                        'Chuyên khoa', appointment.specialty, Icons.medical_services_outlined),
-                    _buildDetailRow(
-                        'Mã lịch hẹn', appointment.id, Icons.qr_code_scanner_outlined),
+                    _buildDetailRow('Bác sĩ', appointment.doctorName, Icons.medical_services_outlined),
+                    _buildDetailRow('Chuyên khoa', appointment.specialty, Icons.healing_outlined),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // --- THÔNG TIN BỆNH NHÂN ---
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Thông tin bệnh nhân", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Divider(height: 20),
+                    _buildDetailRow('Họ tên', appointment.patientName, Icons.person_outline),
+                    _buildDetailRow('Số điện thoại', appointment.patientPhone, Icons.phone_outlined),
+                    _buildDetailRow('Địa chỉ', appointment.patientAddress, Icons.location_on_outlined),
+                    if (appointment.notes.isNotEmpty)
+                      _buildDetailRow('Ghi chú', appointment.notes, Icons.note_alt_outlined),
                   ],
                 ),
               ),
@@ -94,8 +160,8 @@ class AppointmentDetailScreen extends StatelessWidget {
             
             const SizedBox(height: 24),
 
-            // --- ✨ CẢI TIẾN: Nút hành động trông đẹp hơn ---
-            if (appointment.status == 'upcoming')
+            // --- NÚT HÀNH ĐỘNG ---
+            if (appointment.status == 'Pending' || appointment.status == 'Confirmed')
               Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -108,23 +174,18 @@ class AppointmentDetailScreen extends StatelessWidget {
                         title: const Text('Sửa lịch hẹn'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
+                          // Pop màn hình chi tiết trước khi mở màn hình sửa
                           Navigator.pop(context); 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Chức năng sửa lịch hẹn...')),
-                          );
+                          onEdit(appointment);
                         },
                       ),
-                      const Divider(height: 1),
+                      const Divider(height: 1, indent: 16, endIndent: 16),
                       ListTile(
                         leading: const Icon(Icons.cancel_outlined, color: Colors.red),
                         title: const Text('Hủy lịch hẹn'),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
-                          // TODO: Hiển thị dialog xác nhận trước khi hủy
-                          Navigator.pop(context); 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Chức năng hủy lịch hẹn...')),
-                          );
+                          _showCancelConfirmationDialog(context);
                         },
                       ),
                     ],
@@ -137,7 +198,7 @@ class AppointmentDetailScreen extends StatelessWidget {
     );
   }
   
-  // Widget helper để hiển thị từng dòng chi tiết
+  // Widget helper (không đổi)
   Widget _buildDetailRow(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -146,7 +207,7 @@ class AppointmentDetailScreen extends StatelessWidget {
         children: [
           Icon(icon, color: Colors.grey.shade600, size: 22),
           const SizedBox(width: 15),
-          Expanded( // Dùng Expanded để text tự xuống dòng nếu quá dài
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

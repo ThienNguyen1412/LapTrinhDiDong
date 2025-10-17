@@ -1,14 +1,18 @@
+// File: screens/admin/admin_appointment/admin_appointment_screen.dart
+
 import 'package:flutter/material.dart';
-import '../../models/appointment.dart'; // Đảm bảo model Appointment được import
+// ✨ SỬA LỖI: Import model và sử dụng bí danh 'model' để tránh xung đột
+import '../../../models/appointment.dart' as model; 
 
 /// Màn hình quản lý các lịch hẹn (dành cho Admin)
 class AdminAppointmentScreen extends StatefulWidget {
-  final List<Appointment> pendingAppointments;
+  // ✨ CẢI TIẾN: Đổi tên tham số cho chính xác, vì nó chứa tất cả lịch hẹn
+  final List<model.Appointment> appointments; 
   final Function(String id, String newStatus) updateAppointmentStatus;
 
   const AdminAppointmentScreen({
     super.key,
-    required this.pendingAppointments,
+    required this.appointments,
     required this.updateAppointmentStatus,
   });
 
@@ -17,142 +21,167 @@ class AdminAppointmentScreen extends StatefulWidget {
 }
 
 class _AdminAppointmentScreenState extends State<AdminAppointmentScreen> {
-  // Lọc lịch hẹn theo trạng thái (chỉ Pending)
-  List<Appointment> get _pendingAppointments {
-    return widget.pendingAppointments
-        .where((app) => app.status == 'Pending')
-        .toList();
-  }
 
-  // Hàm xác nhận lịch hẹn
-  void _confirmAppointment(String id) {
-    widget.updateAppointmentStatus(id, 'Confirmed');
-  }
-
-  // Hàm hủy lịch hẹn
-  void _cancelAppointment(String id) {
-    widget.updateAppointmentStatus(id, 'Canceled');
+  // ✨ CẢI TIẾN: Tách thành các hàm lọc riêng biệt cho mỗi tab
+  List<model.Appointment> _filterAppointmentsByStatus(String status) {
+    return widget.appointments.where((app) => app.status == status).toList();
   }
 
   // Widget xây dựng Card hiển thị chi tiết lịch hẹn
-  Widget _buildAppointmentCard(Appointment app, BuildContext context) {
-    // 💥 KHẮC PHỤC LỖI: Truy cập trực tiếp các thuộc tính của Appointment
-    // Thay vì app.bookingDetails.X hay app.doctor.X
-    
+  Widget _buildAppointmentCard(model.Appointment app) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 15),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dòng 1: Tiêu đề - Thông tin chung
-            const Text(
-              'Yêu cầu Đặt lịch khám mới',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D47A1)),
-            ),
-            const Divider(),
-
-            // Dòng 2: Thông tin Bác sĩ
-            Row(
-              children: [
-                const Icon(Icons.person, size: 18, color: Colors.blue),
-                const SizedBox(width: 8),
-                Text(
-                  // 💥 Đã sửa lỗi: Sử dụng app.doctorName và app.specialty
-                  'BS: ${app.doctorName} (${app.specialty})', 
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
+            // Thông tin bệnh nhân
+            _buildInfoRow(Icons.badge_outlined, 'Bệnh nhân:', '${app.patientName} - ${app.patientPhone}'),
             const SizedBox(height: 8),
 
-            // Dòng 3: Thời gian
-            Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 18, color: Colors.blue),
-                const SizedBox(width: 8),
-                Text(
-                  // 💥 Đã sửa lỗi: Sử dụng app.date và app.time
-                  'Thời gian: ${app.date} lúc ${app.time}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
+            // Thông tin Bác sĩ
+            _buildInfoRow(Icons.medical_services_outlined, 'Bác sĩ:', '${app.doctorName} (${app.specialty})'),
             const SizedBox(height: 8),
 
-            // Dòng 4: ID/Trạng thái
-            Row(
-              children: [
-                const Icon(Icons.vpn_key, size: 18, color: Colors.grey),
-                const SizedBox(width: 8),
-                Text('ID: ${app.id} | Trạng thái: ${app.status}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
-              ],
-            ),
-            // Dòng 5 (Giả định thông tin Bệnh nhân/Địa chỉ nếu có)
-            const SizedBox(height: 10),
+            // Thời gian
+            _buildInfoRow(Icons.calendar_today_outlined, 'Thời gian:', '${app.date} lúc ${app.time}'),
             
-            const Divider(),
-
-            // Khu vực nút bấm Admin
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // Nút Hủy
-                OutlinedButton(
-                  onPressed: app.status != 'Pending' ? null : () => _cancelAppointment(app.id),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
+            // Chỉ hiển thị nút nếu lịch hẹn đang chờ xử lý
+            if (app.status == 'Pending') ...[
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.cancel_outlined),
+                    label: const Text('Hủy'),
+                    onPressed: () => widget.updateAppointmentStatus(app.id, 'Canceled'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                    ),
                   ),
-                  child: const Text('Hủy'),
-                ),
-                const SizedBox(width: 10),
-                // Nút Xác nhận
-                ElevatedButton(
-                  onPressed: app.status != 'Pending' ? null : () => _confirmAppointment(app.id),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Xác nhận'),
+                    onPressed: () => widget.updateAppointmentStatus(app.id, 'Confirmed'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
-                  child: const Text('Xác nhận'),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ]
           ],
         ),
       ),
     );
   }
 
+  // Widget helper để tạo các dòng thông tin cho đồng bộ
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Colors.blue.shade700),
+        const SizedBox(width: 12),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 15, color: Colors.black87, fontFamily: 'Roboto'),
+              children: [
+                TextSpan(text: '$label ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-
-      body: _pendingAppointments.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle_outline, size: 60, color: Colors.green),
-                  SizedBox(height: 10),
-                  Text(
-                    '🎉 Không có lịch hẹn nào đang chờ xử lý.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: _pendingAppointments.length,
-              itemBuilder: (context, index) {
-                final appointment = _pendingAppointments[index];
-                return _buildAppointmentCard(appointment, context);
-              },
+    // ✨ CẢI TIẾN: Giao diện sử dụng TabController
+    return DefaultTabController(
+      length: 3, // Số lượng tab
+      child: Scaffold(
+        // AppBar được quản lý bởi AdminHomeScreen, ở đây chỉ cần TabBar
+        appBar: TabBar(
+          labelColor: Colors.red.shade700,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: Colors.red.shade700,
+          tabs: const [
+            Tab(text: 'Chờ xử lý'),
+            Tab(text: 'Đã xác nhận'),
+            Tab(text: 'Đã hủy'),
+          ],
+        ),
+        body: TabBarView(
+          children: [
+            // Tab 1: Lịch hẹn chờ xử lý
+            _AppointmentListView(
+              appointments: _filterAppointmentsByStatus('Pending'),
+              emptyMessage: '🎉 Không có lịch hẹn nào đang chờ xử lý.',
+              buildCard: _buildAppointmentCard,
             ),
+            // Tab 2: Lịch hẹn đã xác nhận
+            _AppointmentListView(
+              appointments: _filterAppointmentsByStatus('Confirmed'),
+              emptyMessage: 'Chưa có lịch hẹn nào được xác nhận.',
+              buildCard: _buildAppointmentCard,
+            ),
+            // Tab 3: Lịch hẹn đã hủy
+            _AppointmentListView(
+              appointments: _filterAppointmentsByStatus('Canceled'),
+              emptyMessage: 'Không có lịch hẹn nào bị hủy.',
+              buildCard: _buildAppointmentCard,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ✨ CẢI TIẾN: Widget con để hiển thị danh sách, có thể tái sử dụng
+class _AppointmentListView extends StatelessWidget {
+  final List<model.Appointment> appointments;
+  final String emptyMessage;
+  final Widget Function(model.Appointment) buildCard;
+
+  const _AppointmentListView({
+    required this.appointments,
+    required this.emptyMessage,
+    required this.buildCard,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (appointments.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_outlined, size: 60, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(emptyMessage, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: appointments.length,
+      itemBuilder: (context, index) {
+        return buildCard(appointments[index]);
+      },
     );
   }
 }

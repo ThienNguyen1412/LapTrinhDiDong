@@ -20,13 +20,6 @@ class ProfileScreen extends StatelessWidget {
     // Danh sách chức năng cơ bản
     final List<_ProfileFeature> features = [
       _ProfileFeature(
-        icon: Icons.person,
-        title: 'Lịch Hẹn Của Tôi',
-        onTap: () {
-          Navigator.pushNamed(context, '/appointments');
-        },
-      ),
-      _ProfileFeature(
         icon: Icons.edit,
         title: 'Cập nhật thông tin',
         onTap: () {
@@ -38,13 +31,6 @@ class ProfileScreen extends StatelessWidget {
         title: 'Đổi mật khẩu',
         onTap: () {
           Navigator.pushNamed(context, '/change_password');
-        },
-      ),
-      _ProfileFeature(
-        icon: Icons.notifications,
-        title: 'Thông báo',
-        onTap: () {
-          Navigator.pushNamed(context, '/notifications');
         },
       ),
       _ProfileFeature(

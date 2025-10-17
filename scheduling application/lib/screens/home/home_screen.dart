@@ -1,6 +1,6 @@
 // File: screens/home/home_screen.dart
 
-import 'dart:async'; // Cần cho Timer
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/notification.dart';
 import '../notification/notification_screen.dart';
@@ -8,13 +8,12 @@ import '../notification/notification_screen.dart';
 // ✨ THÊM CÁC IMPORT CẦN THIẾT
 import '../../models/doctor.dart';
 import '../appointment/book_new_appointment_screen.dart';
-
+import 'details_screen.dart'; // Import để có thể sử dụng BookingDetails
 
 // Dữ liệu cho các mục trong lưới tính năng
 class FeatureItem {
   final IconData icon;
   final String label;
-  // ✨ Thêm một định danh duy nhất cho mỗi mục
   final String id;
 
   const FeatureItem({required this.icon, required this.label, required this.id});
@@ -23,14 +22,14 @@ class FeatureItem {
 class HomeScreen extends StatefulWidget {
   final List<AppNotification> notifications;
   final Function(String) markNotificationAsRead;
-  // ✨ THÊM THAM SỐ ĐỂ NHẬN HÀM TỪ DASHBOARD
-  final void Function(Doctor) onBookAppointment;
+  // ✨ SỬA LỖI: Cập nhật lại chữ ký hàm để nhận cả BookingDetails
+  final void Function(Doctor, BookingDetails) onBookAppointment;
 
   const HomeScreen({
     super.key,
     required this.notifications,
     required this.markNotificationAsRead,
-    required this.onBookAppointment, // Thêm vào constructor
+    required this.onBookAppointment, // Cập nhật constructor
   });
 
   @override
@@ -43,9 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentPage = 0;
 
   final List<String> _bannerImages = [
-    'https://cdn.phenikaamec.com/phenikaa-mec/image/5-14-2025/6d9f06a3-13cb-4b9a-97a8-84b7b51c9eff-image.webp', // Placeholder 1
-    'https://dakhoa.hungyenweb.com/wp-content/uploads/2018/06/banner-phong-kham-da-khoa-2.jpg', // Placeholder 2
-    'https://phusanthienan.com/wp-content/uploads/2024/12/1banner-web-Chinh-thuc-Hifu.jpg', // Placeholder 3
+    'https://cdn.phenikaamec.com/phenikaa-mec/image/5-14-2025/6d9f06a3-13cb-4b9a-97a8-84b7b51c9eff-image.webp',
+    'https://dakhoa.hungyenweb.com/wp-content/uploads/2018/06/banner-phong-kham-da-khoa-2.jpg',
+    'https://phusanthienan.com/wp-content/uploads/2024/12/1banner-web-Chinh-thuc-Hifu.jpg',
   ];
 
   @override
@@ -64,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _startBannerTimer() {
     _bannerTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!mounted) return; // Kiểm tra nếu widget còn tồn tại
       if (_currentPage < _bannerImages.length - 1) {
         _currentPage++;
       } else {
@@ -79,10 +79,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-    // ✨ CẬP NHẬT DANH SÁCH TÍNH NĂNG VỚI `id`
     final List<FeatureItem> features = [
       const FeatureItem(id: 'book_appointment', icon: Icons.description_outlined, label: 'Đặt lịch\nkhám bệnh'),
       const FeatureItem(id: 'lookup_results', icon: Icons.find_in_page_outlined, label: 'Tra cứu kết quả\nkhám bệnh'),
@@ -124,23 +122,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     itemBuilder: (context, index) {
                       final feature = features[index];
-                      // ✨ WRAP WIDGET BẰNG INKWELL VÀ XỬ LÝ SỰ KIỆN NHẤN VÀO
                       return InkWell(
                         onTap: () {
-                          // Kiểm tra id của nút được nhấn
                           if (feature.id == 'book_appointment') {
-                            // Điều hướng đến màn hình đặt lịch
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => BookNewAppointmentScreen(
-                                  // Truyền hàm đã nhận từ Dashboard xuống
                                   onBookAppointment: widget.onBookAppointment,
                                 ),
                               ),
                             );
                           } else {
-                            // Xử lý cho các nút khác (hiển thị thông báo)
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Chức năng "${feature.label.replaceAll('\n', ' ')}" sắp ra mắt!')),
                             );
@@ -174,7 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget header (giữ nguyên)
   Widget _buildHeaderContent(BuildContext context) {
     final unreadCount = widget.notifications.where((n) => !n.isRead).length;
     const userName = 'THIEN';
@@ -201,6 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 getGreeting(),
@@ -247,7 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget thanh tìm kiếm (giữ nguyên)
   Widget _buildSearchBar() {
     return Material(
       elevation: 2.0,
@@ -269,7 +261,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget cho mỗi mục trong lưới tính năng (giữ nguyên)
   Widget _buildFeatureItem(FeatureItem item) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -292,7 +283,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   
-  // Widget banner (giữ nguyên)
   Widget _buildPartnershipBanner() {
     return Card(
       elevation: 2,
@@ -307,9 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: _pageController,
               itemCount: _bannerImages.length,
               onPageChanged: (index) {
-                setState(() {
-                  _currentPage = index;
-                });
+                if (mounted) setState(() => _currentPage = index);
               },
               itemBuilder: (context, index) {
                 return Image.network(
@@ -350,7 +338,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
   
-  // Bottom sheet (giữ nguyên)
   void _showNotificationBottomSheet(BuildContext context) {
     final sortedNotifications = List<AppNotification>.from(widget.notifications)
       ..sort((a, b) => b.date.compareTo(a.date));

@@ -1,10 +1,14 @@
+// File: screens/appointment/book_new_appointment_screen.dart
+
 import 'package:flutter/material.dart';
 import '../../models/doctor.dart';
-import '../home/details_screen.dart'; // Cần import DetailsScreen để DoctorCard hoạt động
+import '../home/details_screen.dart'; // Import để có thể sử dụng BookingDetails
 
-// 💥 CHUYỂN THÀNH STATEFUL WIDGET ĐỂ QUẢN LÝ TRẠNG THÁI LỌC
+// ----------------------------------------------------
+// 1. MÀN HÌNH ĐẶT LỊCH HẸN MỚI
+// ----------------------------------------------------
 class BookNewAppointmentScreen extends StatefulWidget {
-  final void Function(Doctor) onBookAppointment;
+  final void Function(Doctor, BookingDetails) onBookAppointment;
 
   const BookNewAppointmentScreen({
     super.key,
@@ -18,28 +22,24 @@ class BookNewAppointmentScreen extends StatefulWidget {
 
 class _BookNewAppointmentScreenState extends State<BookNewAppointmentScreen> {
   final List<Doctor> allDoctors = Doctor.getDoctors();
-  String? _selectedSpecialty; // Trạng thái lọc
+  String? _selectedSpecialty;
 
-  // Hàm thay đổi trạng thái lọc
   void _selectSpecialty(String specialty) {
     setState(() {
-      // Nếu nhấn lại chuyên khoa đã chọn, hủy chọn (hiển thị tất cả)
       _selectedSpecialty = (_selectedSpecialty == specialty) ? null : specialty;
     });
   }
 
-  // Hàm lọc danh sách bác sĩ
   List<Doctor> get _filteredDoctors {
     if (_selectedSpecialty == null) {
-      return allDoctors; // Nếu không lọc, hiển thị TẤT CẢ bác sĩ
+      return allDoctors;
     }
-    // Lọc theo chuyên khoa
     return allDoctors
         .where((doctor) => doctor.specialty == _selectedSpecialty)
         .toList();
   }
 
-  // DANH SÁCH CHUYÊN KHOA
+  // Cập nhật tên chuyên khoa để xuống dòng đẹp hơn
   final List<Map<String, dynamic>> categories = const [
     {'name': 'Nhi khoa', 'icon': Icons.child_care},
     {'name': 'Mắt', 'icon': Icons.remove_red_eye},
@@ -53,20 +53,24 @@ class _BookNewAppointmentScreenState extends State<BookNewAppointmentScreen> {
     {'name': 'Sản phụ khoa', 'icon': Icons.pregnant_woman},
   ];
 
-  // WIDGET CATEGORY DÙNG GRID VIEW
+  // ✨ WIDGET ĐÃ ĐƯỢC CẬP NHẬT LẠI THÀNH GRIDVIEW CÓ THỂ CUỘN DỌC
   Widget _buildCategoryGrid() {
-    const double itemHeight = 90.0;
-    const double spacing = 10.0;
-    const double fixedHeight = (2 * itemHeight) + spacing;
+    // Chiều cao ước tính của một mục trong lưới
+    const double itemHeight = 110.0;
+    // Khoảng cách giữa các mục
+    const double spacing = 12.0;
+    // Chiều cao của container để hiển thị đúng 2 dòng
+    const double containerHeight = (2 * itemHeight) + spacing;
 
     return SizedBox(
-      height: fixedHeight,
+      height: containerHeight,
       child: GridView.builder(
+        // Cho phép cuộn dọc nếu nội dung vượt quá chiều cao
         physics: const BouncingScrollPhysics(),
         itemCount: categories.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5,
-          childAspectRatio: 0.85,
+          crossAxisCount: 4,      // 4 mục trên một hàng
+          childAspectRatio: 0.75, // Điều chỉnh tỉ lệ (rộng/cao) cho cân đối
           crossAxisSpacing: spacing,
           mainAxisSpacing: spacing,
         ),
@@ -75,29 +79,32 @@ class _BookNewAppointmentScreenState extends State<BookNewAppointmentScreen> {
           final categoryName = category['name'] as String;
           final isSelected = _selectedSpecialty == categoryName;
 
-          return GestureDetector(
+          return InkWell(
             onTap: () => _selectSpecialty(categoryName),
+            borderRadius: BorderRadius.circular(12),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
-                  radius: 28,
-                  backgroundColor: isSelected ? Colors.blue : Colors.blue[50],
-                  child: Icon(category['icon'] as IconData,
-                      color: isSelected ? Colors.white : Colors.blue, size: 28),
-                ),
-                const SizedBox(height: 5),
-                Expanded(
-                  child: Text(
-                    categoryName,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  radius: 30,
+                  backgroundColor: isSelected ? Colors.blue.shade700 : Colors.blue.withOpacity(0.1),
+                  child: Icon(
+                    category['icon'] as IconData,
+                    color: isSelected ? Colors.white : Colors.blue.shade700,
+                    size: 30,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  categoryName,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected ? Colors.blue.shade800 : Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -107,56 +114,80 @@ class _BookNewAppointmentScreenState extends State<BookNewAppointmentScreen> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // Đổi màu nền cho sạch sẽ
       appBar: AppBar(
         title: const Text('Chọn Bác sĩ để Đặt lịch'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- MỤC CHUYÊN KHOA PHỔ BIẾN ---
-            const Text(
-              'Chọn Chuyên khoa',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            _buildCategoryGrid(),
-            const SizedBox(height: 25),
-            // --------------------------------------------------
-
+            // Phần chọn chuyên khoa
             Padding(
-              padding: const EdgeInsets.only(bottom: 15),
-              child: Text(
-                _selectedSpecialty == null
-                    ? 'Danh sách tất cả các Bác sĩ:'
-                    : 'Kết quả lọc cho: $_selectedSpecialty',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                    const Text(
+                    'Chọn Chuyên khoa',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildCategoryGrid(),
+                ],
               ),
             ),
+            
+            // Dải phân cách
+            Container(height: 8, color: Colors.grey[100]),
+            
+            // Phần danh sách bác sĩ
+            Padding(
+               padding: const EdgeInsets.all(16.0),
+              child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Text(
+                        _selectedSpecialty == null
+                            ? 'Danh sách Bác sĩ'
+                            : 'Bác sĩ chuyên khoa: $_selectedSpecialty',
+                        style:
+                            const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                    ),
 
-            // Tái sử dụng DoctorCard với danh sách đã lọc
-            ..._filteredDoctors.map((doctor) => Padding(
-                  padding: const EdgeInsets.only(bottom: 15),
-                  child: DoctorCard(
-                    doctor: doctor,
-                    onBookAppointment: widget.onBookAppointment,
-                  ),
-                )),
-
-            if (_filteredDoctors.isEmpty)
-              const Center(
-                child: Padding(
-                   padding: EdgeInsets.all(20.0),
-                   child: Text('Không tìm thấy bác sĩ nào thuộc chuyên khoa này.'),
-                ),
+                    if (_filteredDoctors.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40.0),
+                          child: Text('Không tìm thấy bác sĩ nào thuộc chuyên khoa này.'),
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _filteredDoctors.length,
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                           return DoctorCard(
+                              doctor: _filteredDoctors[index],
+                              onBookAppointment: widget.onBookAppointment,
+                            );
+                        },
+                      ),
+                ],
               ),
+            ),
           ],
         ),
       ),
@@ -165,108 +196,92 @@ class _BookNewAppointmentScreenState extends State<BookNewAppointmentScreen> {
 }
 
 // =======================================================================
-// 💖 DOCTOR CARD WIDGET ĐÃ ĐƯỢC DÁN VÀO ĐÂY
+// DOCTOR CARD WIDGET (Không thay đổi)
 // =======================================================================
 
-/// Widget Card bác sĩ có hiệu ứng hover
-class DoctorCard extends StatefulWidget {
+class DoctorCard extends StatelessWidget {
   final Doctor doctor;
-  final void Function(Doctor) onBookAppointment;
+  final void Function(Doctor, BookingDetails) onBookAppointment;
 
   const DoctorCard({
-    Key? key,
+    super.key,
     required this.doctor,
     required this.onBookAppointment,
-  }) : super(key: key);
-
-  @override
-  _DoctorCardState createState() => _DoctorCardState();
-}
-
-class _DoctorCardState extends State<DoctorCard> {
-  bool _isHovered = false;
+  });
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedScale(
-        scale: _isHovered ? 1.05 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        child: Card(
-          elevation: _isHovered ? 6 : 2,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-                color: _isHovered ? Colors.blue.shade200 : Colors.grey.shade200,
-                width: 1),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                ClipOval(
-                  child: Image.network(
-                    widget.doctor.image,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.doctor.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0D47A1),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.doctor.specialty,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      Text(
-                        widget.doctor.hospital,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailsScreen(
-                          doctor: widget.doctor,
-                          onBookAppointment: widget.onBookAppointment,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.arrow_circle_right_outlined,
-                    size: 35,
-                    color: Colors.blue,
-                  ),
-                ),
-              ],
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailsScreen(
+                doctor: doctor,
+                onBookAppointment: onBookAppointment,
+              ),
             ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              ClipOval(
+                child: Image.network(
+                  doctor.image,
+                  width: 65,
+                  height: 65,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      doctor.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0D47A1),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      doctor.specialty,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      doctor.hospital,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios,
+                size: 18,
+                color: Colors.blue,
+              ),
+            ],
           ),
         ),
       ),

@@ -50,9 +50,7 @@ class DoctorApp extends StatelessWidget {
         
         // MÀN HÌNH PHỤ (Truy cập từ Profile/Settings)
         '/register': (context) => const RegisterScreen(),
-        '/appointments': (context) => const MyAppointmentsScreen(),
         '/update_profile': (context) => const UpdateProfileScreen(),
-        '/notifications': (context) => const NotificationsScreen(),
         '/change_password': (context) => const ChangePasswordScreen(),
         '/support': (context) => const SupportScreen(),
       },
