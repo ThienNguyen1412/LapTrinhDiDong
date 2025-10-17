@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SpecialityService {
   static const String baseUrl = "http://192.168.111.218:5101/api/specialitty";
 
-  final<Speciality> ListSpeciality() async {
+  Future<List<Speciality>> ListSpeciality() async {
     final url = Uri.parse('$baseUrl');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';

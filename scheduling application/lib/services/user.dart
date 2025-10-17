@@ -139,4 +139,97 @@ class UserService {
       throw Exception('Failed to load current user data.');
     }
   }
+
+  Future<List<User>> getAllUsers({int? page, int? pageSize, String? query}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    final uri = Uri.parse(baseUrl).replace(queryParameters: {
+      if (page != null) 'page': page.toString(),
+      if (pageSize != null) 'pageSize': pageSize.toString(),
+      if (query != null && query.isNotEmpty) 'q': query,
+    });
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    ).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final dynamic decoded = jsonDecode(response.body);
+
+      // Normalize to a List<dynamic>
+      List<dynamic> rawList = [];
+      if (decoded is List) {
+        rawList = decoded;
+      } else if (decoded is Map<String, dynamic>) {
+        // Common keys: data, users, items
+        if (decoded['data'] is List) {
+          rawList = decoded['data'] as List;
+        } else if (decoded['users'] is List) {
+          rawList = decoded['users'] as List;
+        } else if (decoded['items'] is List) {
+          rawList = decoded['items'] as List;
+        } else {
+          // If object but no list key, try to find any list value
+          rawList = decoded.values.firstWhere(
+            (v) => v is List,
+            orElse: () => <dynamic>[],
+          ) as List<dynamic>;
+        }
+      } else {
+        throw Exception('Unexpected response format from server.');
+      }
+
+      // Map to User safely
+      final users = rawList.where((e) => e != null).map<User>((e) {
+        if (e is Map<String, dynamic>) {
+          return User.fromJson(e);
+        } else if (e is String) {
+          final parsed = jsonDecode(e);
+          return User.fromJson(parsed as Map<String, dynamic>);
+        } else {
+          // Defensive fallback: try to cast/convert
+          return User.fromJson(Map<String, dynamic>.from(e as Map));
+        }
+      }).toList();
+
+      return users;
+    } else if (response.statusCode == 204) {
+      return <User>[];
+    } else {
+      throw Exception('Failed to load users: HTTP ${response.statusCode}. Body: ${response.body}');
+    }
+  }
+
+  Future<String> deleteUser(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication token not found.');
+    }
+
+    final url = Uri.parse('$baseUrl/$id');
+    final response = await http.delete(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      // Trả về thông báo thành công
+      final Map<String, dynamic> jsonData = json.decode(response.body);
+      return jsonData['message'] ?? "Xóa bài viết thành công";
+    } else {
+      final Map<String, dynamic> error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Không thể xóa bài viết');
+    }
+  }
 }

@@ -1,91 +1,70 @@
 import 'package:flutter/material.dart';
-// 💥 Import màn hình Admin Dashboard (Giả định)
-import '../admin_home_screen.dart'; 
-
-class ProfileScreen extends StatelessWidget {
-  // 💥 Cờ giả định để kiểm tra quyền Admin
-  final bool isAdmin = true; // Đặt là true để thấy nút
-
-  const ProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Thông tin mẫu
-    const String name = 'Nguyễn Minh Thiện (Admin)';
-    const String email = 'thiennguyen@gmail.com';
-    const String phone = '0901 234 567';
-    const String avatarUrl =
-        'https://img.lovepik.com/free-png/20220101/lovepik-tortoise-png-image_401154498_wh860.png';
-import 'package:scheduling_application/models/user.dart';
+import '../../models/user.dart';
+import '../admin_home_screen.dart'; // adjust path if needed
 
 class ProfileScreen extends StatelessWidget {
   final User user;
-  const ProfileScreen({super.key, required this.user});
+  // Nếu muốn override (ví dụ test), bạn có thể truyền isAdmin;
+  // theo thực tế hãy quyết định dựa vào user.role hoặc claim trên token.
+  final bool isAdmin;
+
+  const ProfileScreen({
+    super.key,
+    required this.user,
+    this.isAdmin = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Lấy thông tin từ user truyền vào
-    final String name = user.fullname;
+    final String name = user.fullname.isNotEmpty ? user.fullname : 'Người dùng';
     final String email = user.email;
     final String phone = user.phone ?? 'Chưa cập nhật';
-    final String avatarUrl = 'https://img.lovepik.com/free-png/20220101/lovepik-tortoise-png-image_401154498_wh860.png';
+    final String avatarUrl =
+        'https://img.lovepik.com/free-png/20220101/lovepik-tortoise-png-image_401154498_wh860.png';
 
-    // Danh sách chức năng cơ bản
     final List<_ProfileFeature> features = [
       _ProfileFeature(
         icon: Icons.person,
         title: 'Lịch Hẹn Của Tôi',
-        onTap: () {
-          Navigator.pushNamed(context, '/appointments');
-        },
+        onTap: () => Navigator.pushNamed(context, '/appointments'),
       ),
       _ProfileFeature(
         icon: Icons.edit,
         title: 'Cập nhật thông tin',
-        onTap: () {
-          Navigator.pushNamed(context, '/update_profile', arguments: user);
-        },
+        onTap: () => Navigator.pushNamed(context, '/update_profile', arguments: user),
       ),
       _ProfileFeature(
         icon: Icons.lock_reset,
         title: 'Đổi mật khẩu',
-        onTap: () {
-          Navigator.pushNamed(context, '/change_password');
-        },
+        onTap: () => Navigator.pushNamed(context, '/change_password'),
       ),
       _ProfileFeature(
         icon: Icons.notifications,
         title: 'Thông báo',
-        onTap: () {
-          Navigator.pushNamed(context, '/notifications');
-        },
+        onTap: () => Navigator.pushNamed(context, '/notifications'),
       ),
       _ProfileFeature(
         icon: Icons.support_agent,
         title: 'Hỗ trợ',
-        onTap: () {
-          Navigator.pushNamed(context, '/support');
-        },
+        onTap: () => Navigator.pushNamed(context, '/support'),
       ),
     ];
 
-    // 💥 Thêm chức năng Admin nếu là Admin
-    if (isAdmin) {
-      features.insert(0, 
+    // Thêm chức năng admin nếu isAdmin == true (hoặc kiểm tra qua user.role)
+    final bool userIsAdmin = isAdmin || (user.role != null && user.role == 0);
+    if (userIsAdmin) {
+      features.insert(
+        0,
         _ProfileFeature(
           icon: Icons.admin_panel_settings,
           title: 'Truy Cập Admin Dashboard',
+          color: Colors.red.shade700,
           onTap: () {
-            // Điều hướng tới màn hình Admin Dashboard
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (c) => const AdminHomeScreen(),
-              ),
+              MaterialPageRoute(builder: (c) => const AdminHomeScreen()),
             );
           },
-          // 💥 Tùy chỉnh màu sắc để nổi bật
-          color: Colors.red.shade700, 
         ),
       );
     }
@@ -93,18 +72,14 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hồ sơ'),
-        backgroundColor: Colors.teal, // Thống nhất màu sắc AppBar
+        backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Quay lại đăng nhập',
+            tooltip: 'Đăng xuất',
             onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login', // Giả định route đăng nhập là '/login'
-                (route) => false,
-              );
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
             },
           ),
         ],
@@ -112,7 +87,6 @@ class ProfileScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Phần Thông tin người dùng (Giữ nguyên)
             Card(
               elevation: 4,
               margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -122,23 +96,11 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircleAvatar(
-                      radius: 48,
-                      backgroundImage: NetworkImage(avatarUrl),
-                    ),
+                    CircleAvatar(radius: 48, backgroundImage: NetworkImage(avatarUrl)),
                     const SizedBox(height: 16),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text(name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Text(
-                      email,
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
+                    Text(email, style: const TextStyle(fontSize: 16, color: Colors.grey)),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -152,7 +114,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // Các chức năng (Đã cập nhật)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -162,19 +123,17 @@ class ProfileScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     child: ListTile(
-                      leading: Icon(feature.icon, color: feature.color ?? Colors.teal), // Sử dụng màu tùy chỉnh
+                      leading: Icon(feature.icon, color: feature.color ?? Colors.teal),
                       title: Text(
-                        feature.title, 
+                        feature.title,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: feature.color != null ? FontWeight.bold : FontWeight.normal,
-                          color: feature.color ?? Colors.black, // Sử dụng màu tùy chỉnh
+                          color: feature.color ?? Colors.black,
                         ),
                       ),
-                      leading: Icon(feature.icon, color: Colors.blue),
-                      title: Text(feature.title, style: const TextStyle(fontSize: 16)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => feature.onTap(),
+                      onTap: feature.onTap,
                     ),
                   );
                 }).toList(),
@@ -187,17 +146,16 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-// Model chức năng (ĐÃ CẬP NHẬT THÊM THUỘC TÍNH MÀU SẮC)
 class _ProfileFeature {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final Color? color; // 💥 Thêm thuộc tính màu sắc
+  final Color? color;
 
   _ProfileFeature({
     required this.icon,
     required this.title,
     required this.onTap,
-    this.color, // Có thể null
+    this.color,
   });
 }

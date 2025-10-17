@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:scheduling_application/models/user.dart';
+import 'package:scheduling_application/models/doctor.dart';
+import 'package:scheduling_application/models/notification.dart';
+import 'package:scheduling_application/models/appointment.dart' as model;
+
 import 'home/home_screen.dart';
-import 'profile/profile_screen.dart';
-import '../models/doctor.dart';
-import '../models/notification.dart';
-import 'news/news_screen.dart';
 import 'appointment/appointment_screen.dart';
 import 'service/service_screen.dart';
-
-// ✨ SỬA LỖI: Sử dụng 'as model' để tránh xung đột tên Appointment
-import '../models/appointment.dart' as model;
+import 'news/news_screen.dart';
 import 'notification/notification_screen.dart';
-import 'service/service_screen.dart';
+import 'profile/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final User user;
@@ -25,118 +23,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   int _nextAppointmentId = 2;
 
-  // ✨ SỬA LỖI: Sử dụng kiểu dữ liệu đã được định danh rõ ràng
-  final List<model.Appointment> _appointments = [];
-
-  final List<AppNotification> _notifications = AppNotification.initialNotifications();
-  // Quản lý trạng thái lịch hẹn
-  List<Appointment> _appointments = [
-    Appointment(
+  // Appointments stored using the appointment model alias
+  final List<model.Appointment> _appointments = [
+    // Example initial appointment (adjust fields according to your model)
+    model.Appointment(
       id: 'appt1',
       doctorName: 'Bác sĩ Minh',
       specialty: 'Nhi khoa',
       date: '10/11/2025',
-      time: '14:30 PM',
+      time: '14:30',
       status: 'upcoming',
     ),
   ];
 
-  // Quản lý trạng thái thông báo
+  // Notifications
   List<AppNotification> _notifications = AppNotification.initialNotifications();
 
-  void _onItemTapped(int index) {
+  // Helper: add new appointment
+  void _addAppointment(Doctor doctor) {
+    final newAppt = model.Appointment(
+      id: 'appt${_nextAppointmentId++}',
+      doctorName: doctor.name,
+      specialty: doctor.specialty,
+      date: '25/11/2025',
+      time: '10:00',
+      status: 'upcoming',
+    );
+
     setState(() {
-      _selectedIndex = index;
+      _appointments.add(newAppt);
     });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('✅ Đặt lịch thành công với ${doctor.name}')),
+    );
   }
 
-  void _markNotificationAsRead(String id) {
-  // Hàm thêm thông báo khi đặt lịch thành công
-  void _addNotificationForAppointment(Doctor doctor) {
+  // When booking from Home, add both appointment and a notification
+  void _handleBookAppointment(Doctor doctor) {
+    _addAppointment(doctor);
+
     final newNotification = AppNotification(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'Lịch khám đã được đặt thành công! 🎉',
-      body: 'Bạn đã đặt lịch khám với Bác sĩ ${doctor.name}, chuyên khoa ${doctor.specialty} vào ngày 25/11/2025. Vui lòng kiểm tra mục Lịch hẹn.',
+      title: 'Đã đặt lịch với ${doctor.name}',
+      body: 'Bạn đã đặt lịch khám với ${doctor.name} (${doctor.specialty}) vào 25/11/2025.',
       date: DateTime.now(),
       isRead: false,
     );
 
     setState(() {
       _notifications.add(newNotification);
-    });
-
-    _addAppointment(doctor);
-  }
-
-  void _addNotification(AppNotification notification) {
-    setState(() {
-      _notifications.add(notification);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('🔔 Thông báo mới: ${notification.title}')),
-    );
-  }
-
-  // Hàm thêm lịch hẹn (vẫn cần cho các màn hình khác)
-  // Hàm gốc thêm lịch hẹn
-  void _addAppointment(Doctor doctor) {
-    final newAppointment = model.Appointment(
-      id: 'appt${_nextAppointmentId++}',
-      doctorName: doctor.name,
-      specialty: doctor.specialty,
-      date: '25/11/2025',
-      time: '10:00 AM',
-      status: 'upcoming',
-    );
-
-    setState(() {
-      _appointments.add(newAppointment);
+      _selectedIndex = 1; // switch to Appointments tab
     });
   }
 
-  // Hàm thêm thông báo và lịch hẹn (vẫn cần cho các màn hình khác)
-  void _addNotificationForAppointment(Doctor doctor) {
-    final newNotification = AppNotification(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'Lịch khám đã được đặt thành công! 🎉',
-      body: 'Bạn đã đặt lịch khám với BS ${doctor.name} vào ngày 25/11/2025.',
-      date: DateTime.now(),
-      isRead: false,
-    );
-
-
-    _onItemTapped(1);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '✅ Đặt lịch thành công với ${doctor.name} vào 25/11/2025',
-        ),
-      ),
-    );
-  }
-
-  // Hàm đánh dấu thông báo đã đọc
+  // Mark notification as read
   void _markNotificationAsRead(String id) {
     setState(() {
-      final index = _notifications.indexWhere((noti) => noti.id == id);
-      if (index >= 0 && !_notifications[index].isRead) {
-        _notifications[index] = _notifications[index].copyWith(isRead: true);
+      final idx = _notifications.indexWhere((n) => n.id == id);
+      if (idx >= 0 && !_notifications[idx].isRead) {
+        _notifications[idx] = _notifications[idx].copyWith(isRead: true);
       }
     });
-
-    _addAppointment(doctor);
-    
-    _onItemTapped(1); // Chuyển sang tab Lịch hẹn
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('✅ Đặt lịch thành công với ${doctor.name}')),
-    );
   }
 
+  // Delete appointment
   void _deleteAppointment(model.Appointment appt) {
-  }
-
-  // Hàm xóa và sửa lịch hẹn
-  void _deleteAppointment(Appointment appt) {
     setState(() {
       _appointments.removeWhere((a) => a.id == appt.id);
     });
@@ -145,57 +97,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Edit appointment (placeholder)
   void _editAppointment(model.Appointment appt) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Mở form sửa lịch hẹn: ${appt.doctorName}')),
     );
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Danh sách các màn hình
     final List<Widget> screens = <Widget>[
-      // 0. Trang Chủ 
-      // ✨ CẬP NHẬT: Xóa các tham số không còn được sử dụng bởi HomeScreen mới
-      HomeScreen(
-        notifications: _notifications,
-        markNotificationAsRead: _markNotificationAsRead,
-        onBookAppointment: _addNotificationForAppointment,
-      ),
-
-    final List<Widget> _screens = <Widget>[
-      // 0. Trang chủ
       HomeScreen(
         user: widget.user,
-        onBookAppointment: _addNotificationForAppointment,
+        notifications: _notifications,
+        markNotificationAsRead: _markNotificationAsRead,
+        onBookAppointment: _handleBookAppointment,
       ),
-      // 1. Lịch hẹn
       AppointmentScreen(
         appointments: _appointments,
         onDelete: _deleteAppointment,
         onEdit: _editAppointment,
-        onBookAppointment: _addNotificationForAppointment,
+        onBookAppointment: _handleBookAppointment,
       ),
-
-      // 2. Dịch vụ
       ServiceScreen(
-        onBookAppointment: _addNotificationForAppointment,
+        onBookAppointment: _handleBookAppointment,
         unreadNotifications: _notifications,
         markNotificationAsRead: _markNotificationAsRead,
-        addNotification: _addNotification,
+        addNotification: (notif) {
+          setState(() => _notifications.add(notif));
+        },
       ),
-      // 3. Tin tức
       const NewsScreen(),
-
-      // 4. Hồ sơ
-      const ProfileScreen(),
-      NewsScreen(),
-      // 4. Thông báo
       NotificationScreen(
         notifications: _notifications,
         markAsRead: _markNotificationAsRead,
       ),
-      // 5. Hồ sơ
       ProfileScreen(user: widget.user),
     ];
 
@@ -203,18 +145,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue.shade800,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
         currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue.shade800,
+        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today), label: 'Lịch hẹn'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.medical_services), label: 'Dịch vụ'),
-          BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Tin tức'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Lịch hẹn'),
           BottomNavigationBarItem(icon: Icon(Icons.medical_services), label: 'Dịch vụ'),
           BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Tin tức'),

@@ -31,28 +31,45 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Hide keyboard
+    FocusScope.of(context).unfocus();
+
     setState(() => _isLoading = true);
 
-    final authService = AuthService();
-    final user = await authService.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    try {
+      // Use singleton AuthService (persisting token + user inside service)
+      final User user = await AuthService.instance.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-    setState(() => _isLoading = false);
-
-    if (user != null) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đăng nhập thành công!')),
       );
+
+      // Navigate to dashboard and replace login so user can't go back to it
       Navigator.pushReplacementNamed(context, '/dashboard', arguments: user);
-    } else {
+    } catch (e) {
       if (!mounted) return;
+      // Show returned error message (service throws Exception with message)
+      final msg = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sai tài khoản hoặc mật khẩu!')),
+        SnackBar(content: Text('Đăng nhập thất bại: $msg')),
       );
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -75,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: _validateEmail,
                   keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.username],
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -91,6 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   obscureText: _obscure,
                   validator: _validatePassword,
+                  autofillHints: const [AutofillHints.password],
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -102,7 +121,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2,
+                              color: Colors.white,
+                              strokeWidth: 2,
                             ),
                           )
                         : const Text('Đăng nhập'),
@@ -112,9 +132,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            Navigator.pushNamed(context, '/register');
+                          },
                     child: const Text('Đăng ký'),
                   ),
                 ),
