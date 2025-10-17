@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scheduling_application/models/doctor.dart';
 import 'package:scheduling_application/models/user.dart';
-import 'package:scheduling_application/screens/profile/profile_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home/details_screen.dart';
 import 'screens/home/home_screen.dart';
@@ -34,7 +33,6 @@ class DoctorApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/appointments': (context) => const MyAppointmentsScreen(),
-        '/update_profile': (context) => const UpdateProfileScreen(),
         '/notifications': (context) => const NotificationsScreen(),
         '/change_password': (context) => const ChangePasswordScreen(),
         '/support': (context) => const SupportScreen(),
@@ -51,11 +49,19 @@ class DoctorApp extends StatelessWidget {
         if (settings.name == '/home') {
           final user = settings.arguments as User;
           return MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              user: user,
-              onBookAppointment: (doctor) {},
-            ),
+            builder: (context) =>
+                HomeScreen(user: user, onBookAppointment: (doctor) {}),
           );
+        }
+        if (settings.name == '/update_profile') {
+         final user = settings.arguments as User;
+          // Đảm bảo tham số không null và có chứa userId
+            return MaterialPageRoute(
+              builder: (context) {
+                return UpdateProfileScreen(user: user);
+              },
+            );
+          
         }
         if (settings.name == '/details') {
           final doctor = settings.arguments as Doctor;
@@ -64,7 +70,11 @@ class DoctorApp extends StatelessWidget {
               doctor: doctor,
               onBookAppointment: (_) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Không thể đặt lịch qua named route! Vui lòng dùng Navigator.push.')),
+                  const SnackBar(
+                    content: Text(
+                      'Không thể đặt lịch qua named route! Vui lòng dùng Navigator.push.',
+                    ),
+                  ),
                 );
               },
             ),

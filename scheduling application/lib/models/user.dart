@@ -5,7 +5,7 @@ class User {
   final String? phone;
   final String? password;
   final String? address;
-  final String? birthYear;
+  final DateTime? birthDay;
   final String? gender;
   final int role;
 
@@ -16,32 +16,36 @@ class User {
     required this.phone,
     required this.password,
     required this.address,
-    required this.birthYear,
+    required this.birthDay,
     required this.gender,
     required this.role,
   });
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      email: json['email'],
-      fullname: json['fullname'],
-      phone: json['phone'],
-      password: json['password'],
-      address: json['address'],
-      birthYear: json['birthYear'],
-      gender: json['gender'],
-      role: json['role'],
+      id: json['id'] ?? '',
+      email: json['email'] ?? '',
+      fullname: json['fullName'] ?? '',
+      phone: json['phone']?.toString(),
+      password: json['password']?.toString(),
+      address: json['address']?.toString(),
+      birthDay: json['birthDay'] != null && json['birthDay'] != ''
+          ? DateTime.tryParse(json['birthDay'])
+          : null,
+      gender: json['gender']?.toString(),
+      role: json['role'] is int
+          ? json['role']
+          : int.tryParse(json['role']?.toString() ?? '0') ?? 0,
     );
   }
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'email': email,
-      'fullname': fullname,
+      'fullName': fullname,
       'phone': phone,
       'password': password,
       'address': address,
-      'birthYear': birthYear,
+      'birthDay': birthDay,
       'gender': gender,
       'role': role,
     };

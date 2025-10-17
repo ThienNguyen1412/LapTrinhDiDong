@@ -1,155 +1,277 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
+import '../../services/user.dart';
+import '../../models/user.dart';
+import 'package:flutter/material.dart';
 class UpdateProfileScreen extends StatefulWidget {
-  const UpdateProfileScreen({super.key});
+  final User user;
+
+  const UpdateProfileScreen({super.key, required this.user});
 
   @override
   State<UpdateProfileScreen> createState() => _UpdateProfileScreenState();
 }
 
 class _UpdateProfileScreenState extends State<UpdateProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _userService = UserService();
+  late Future<User> _userFuture;
 
-  // Dữ liệu mẫu ban đầu
-  String name = 'Nguyễn Minh Thiện';
-  String email = 'thiennguyen@gmail.com';
-  String phone = '0901 234 567';
-  String birthYear = '1995';
-  String gender = 'Nam'; 
+  @override
+  void initState() {
+    super.initState();
+    _userFuture = _userService.getUserById(widget.user.id);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cập nhật thông tin'),
+      appBar: AppBar(title: const Text('Cập nhật thông tin')),
+      body: FutureBuilder<User>(
+        future: _userFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Lỗi: ${snapshot.error}'));
+          }
+          if (snapshot.hasData) {
+            final user = snapshot.data!;
+            return ProfileForm(user: user);
+          }
+          return const Center(
+            child: Text('Không tìm thấy dữ liệu người dùng.'),
+          );
+        },
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
+    );
+  }
+}
+
+class ProfileForm extends StatefulWidget {
+  final User user;
+
+  const ProfileForm({super.key, required this.user});
+
+  @override
+  State<ProfileForm> createState() => _ProfileFormState();
+}
+
+class _ProfileFormState extends State<ProfileForm> {
+  final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+
+  late final TextEditingController _fullNameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _birthDayController;
+  String? _selectedGender;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = widget.user;
+    _fullNameController = TextEditingController(text: user.fullname);
+    _emailController = TextEditingController(text: user.email);
+    _phoneController = TextEditingController(text: user.phone ?? '');
+    _addressController = TextEditingController(text: user.address ?? '');
+    _birthDayController = TextEditingController(
+      text: user.birthDay != null
+          ? DateFormat('yyyy-MM-dd').format(user.birthDay!)
+          : '',
+    );
+    _selectedGender = user.gender ?? 'Khác';
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _birthDayController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    DateTime initialDate =
+        DateTime.tryParse(_birthDayController.text) ?? DateTime(1995, 1, 1);
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900, 1),
+      lastDate: DateTime.now(),
+      helpText: "Chọn ngày sinh",
+    );
+    if (picked != null) {
+      setState(() {
+        _birthDayController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
+  void _updateProfile() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() => _isLoading = true);
+
+      try {
+        final userService = UserService();
+        final updatedUser = await userService.UpdateUserInfo(
+          widget.user.id,
+          _fullNameController.text,
+          _emailController.text,
+          _phoneController.text,
+          _addressController.text,
+          _birthDayController.text.isNotEmpty
+              ? DateTime.parse(_birthDayController.text)
+              : DateTime(2000, 1, 1), // hoặc xử lý null phù hợp
+          _selectedGender ?? 'Khác',
+        );
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công!')));
+        // Optionally: Cập nhật lại dữ liệu hoặc pop về màn trước
+      } catch (e) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Form(
           key: _formKey,
           child: ListView(
+            padding: const EdgeInsets.all(24.0),
             children: [
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               TextFormField(
-                initialValue: name,
-                decoration: const InputDecoration(
-                  labelText: 'Họ và tên',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                controller: _fullNameController,
+                decoration: InputDecoration(
+                  labelText: 'Họ tên',
+                  prefixIcon: const Icon(Icons.person),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  hintText: 'Nhập họ tên',
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập họ và tên';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  name = value ?? '';
-                },
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Vui lòng nhập họ tên'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
-                initialValue: email,
-                decoration: const InputDecoration(
+                controller: _emailController,
+                readOnly: true,
+                decoration: InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                  prefixIcon: const Icon(Icons.email),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  hintText: 'Nhập email',
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Email không hợp lệ';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  email = value ?? '';
-                },
+                validator: (value) => (value == null || value.isEmpty)
+                    ? 'Vui lòng nhập email'
+                    : (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)
+                          ? 'Email không hợp lệ'
+                          : null),
               ),
               const SizedBox(height: 16),
               TextFormField(
-                initialValue: phone,
-                decoration: const InputDecoration(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
                   labelText: 'Số điện thoại',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
+                  prefixIcon: const Icon(Icons.phone),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  hintText: 'Nhập số điện thoại',
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập số điện thoại';
+                  if (value == null || value.isEmpty) return null;
+                  if (!RegExp(r'^(?:0|\+84)[0-9]{9,10}$').hasMatch(value)) {
+                    return 'Số điện thoại không hợp lệ';
                   }
                   return null;
-                },
-                onSaved: (value) {
-                  phone = value ?? '';
                 },
               ),
               const SizedBox(height: 16),
               TextFormField(
-                initialValue: birthYear,
-                decoration: const InputDecoration(
-                  labelText: 'Năm sinh',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.cake),
+                controller: _addressController,
+                decoration: InputDecoration(
+                  labelText: 'Địa chỉ',
+                  prefixIcon: const Icon(Icons.location_on),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  hintText: 'Nhập địa chỉ',
                 ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập năm sinh';
-                  }
-                  final year = int.tryParse(value);
-                  if (year == null || year < 1900 || year > DateTime.now().year) {
-                    return 'Năm sinh không hợp lệ';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  birthYear = value ?? '';
-                },
               ),
               const SizedBox(height: 16),
               TextFormField(
-                initialValue: gender,
-                decoration: const InputDecoration(
+                controller: _birthDayController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Ngày sinh',
+                  prefixIcon: const Icon(Icons.cake),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: _selectDate,
+                  ),
+                  hintText: 'YYYY-MM-DD',
+                ),
+                onTap: _selectDate,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedGender,
+                decoration: InputDecoration(
                   labelText: 'Giới tính',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: const Icon(Icons.wc),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                keyboardType: TextInputType.text,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Vui lòng nhập giới tính';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  gender = value ?? '';
-                },
+                items: [
+                  'Nam',
+                  'Nữ',
+                  'Khác',
+                ].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                onChanged: (value) => setState(() => _selectedGender = value),
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 icon: const Icon(Icons.save),
                 label: const Text('Lưu thay đổi'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: const TextStyle(fontSize: 16),
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    _formKey.currentState?.save();
-                    // Xử lý lưu dữ liệu ở đây
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Cập nhật thành công!')),
-                    );
-                  }
-                },
+                onPressed: _isLoading ? null : _updateProfile,
               ),
             ],
           ),
         ),
-      ),
+        if (_isLoading)
+          Container(
+            color: Colors.black.withOpacity(0.3),
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+      ],
     );
   }
 }

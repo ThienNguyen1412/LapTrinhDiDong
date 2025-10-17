@@ -18,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final String avatarUrl = 'https://img.lovepik.com/free-png/20220101/lovepik-tortoise-png-image_401154498_wh860.png';
   final List<Doctor> allDoctors = Doctor.getDoctors();
   String? _selectedSpecialty;
 
@@ -127,8 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         CircleAvatar(
           radius: 25,
-          backgroundColor: Colors.blue[100],
-          child: const Icon(Icons.person, color: Colors.blue),
+          backgroundImage: NetworkImage(avatarUrl),
         ),
       ],
     );

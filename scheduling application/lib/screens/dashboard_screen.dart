@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:scheduling_application/models/user.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
-import '../models/doctor.dart'; // Chứa model Doctor
+import '../models/doctor.dart';
 import '../models/notification.dart';
 import 'news/news_screen.dart';
 import 'appointment/appointment_screen.dart';
 import 'notification/notification_screen.dart';
-import 'service/service_screen.dart'; // Màn hình Dịch vụ
+import 'service/service_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final User user;
@@ -47,8 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final newNotification = AppNotification(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: 'Lịch khám đã được đặt thành công! 🎉',
-      body:
-          'Bạn đã đặt lịch khám với Bác sĩ ${doctor.name}, chuyên khoa ${doctor.specialty} vào ngày 25/11/2025. Vui lòng kiểm tra mục Lịch hẹn.',
+      body: 'Bạn đã đặt lịch khám với Bác sĩ ${doctor.name}, chuyên khoa ${doctor.specialty} vào ngày 25/11/2025. Vui lòng kiểm tra mục Lịch hẹn.',
       date: DateTime.now(),
       isRead: false,
     );
@@ -75,7 +74,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _appointments.add(newAppointment);
     });
 
-    _onItemTapped(1); // Chuyển sang tab Lịch hẹn
+    _onItemTapped(1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -140,7 +139,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         markAsRead: _markNotificationAsRead,
       ),
       // 5. Hồ sơ
-      ProfileScreen(),
+      ProfileScreen(user: widget.user),
     ];
 
     return Scaffold(

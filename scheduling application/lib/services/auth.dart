@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   static const String baseUrl = "http://192.168.111.218:5101/api/auth";
+  // static const String baseUrl = "http://10.12.189.19:5101/api/auth";
 
   Future<bool> register(String fullname, String email, String password) async {
     final url = Uri.parse('$baseUrl/register');
@@ -42,4 +43,6 @@ class AuthService {
       return null;
     }
   }
+
+  
 }
