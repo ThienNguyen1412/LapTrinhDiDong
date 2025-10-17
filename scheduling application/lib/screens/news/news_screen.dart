@@ -1,5 +1,9 @@
+// File: screens/news/news_screen.dart (ĐÃ CẬP NHẬT)
+
 import 'package:flutter/material.dart';
 import '../../models/news.dart'; // Import model tin tức
+// 💥 Import màn hình chi tiết
+import 'news_detail_screen.dart'; 
 
 class NewsScreen extends StatelessWidget {
   const NewsScreen({super.key});
@@ -28,7 +32,7 @@ class NewsScreen extends StatelessWidget {
 }
 
 // ------------------------------------------
-// Widget NewsCard - Thẻ hiển thị một bài báo
+// Widget NewsCard - Thẻ hiển thị một bài báo (ĐÃ CẬP NHẬT)
 // ------------------------------------------
 class NewsCard extends StatelessWidget {
   final NewsArticle article;
@@ -40,9 +44,12 @@ class NewsCard extends StatelessWidget {
     // GestureDetector để xử lý sự kiện khi người dùng nhấn vào thẻ tin tức
     return GestureDetector(
       onTap: () {
-        // Có thể thêm Navigator.push để chuyển sang màn hình chi tiết tin tức
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Xem chi tiết: ${article.title}')),
+        // 💥 Điều hướng sang màn hình chi tiết khi nhấn vào thẻ
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (c) => NewsDetailScreen(article: article),
+          ),
         );
       },
       child: Card(

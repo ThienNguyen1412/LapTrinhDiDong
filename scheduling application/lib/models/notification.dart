@@ -6,6 +6,7 @@ class AppNotification {
   final String body;
   final DateTime date;
   final bool isRead;
+  
 
   AppNotification({
     required this.id,
@@ -17,13 +18,17 @@ class AppNotification {
 
   // Tạo một bản sao với trạng thái đã đọc được cập nhật
   AppNotification copyWith({
+    String? id,
+    String? title,
+    String? body,
+    DateTime? date,
     bool? isRead,
   }) {
     return AppNotification(
-      id: id,
-      title: title,
-      body: body,
-      date: date,
+      id: id ?? this.id,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      date: date ?? this.date,
       isRead: isRead ?? this.isRead,
     );
   }

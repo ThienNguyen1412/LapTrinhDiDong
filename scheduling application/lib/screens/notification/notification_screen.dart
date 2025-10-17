@@ -1,5 +1,4 @@
 // File: screens/notification_screen.dart
-
 import 'package:flutter/material.dart';
 import '../../models/notification.dart';
 
