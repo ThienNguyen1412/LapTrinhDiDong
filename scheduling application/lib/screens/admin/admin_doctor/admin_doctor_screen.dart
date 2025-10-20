@@ -1,7 +1,7 @@
 // File: lib/screens/admin/admin_doctor/admin_doctor_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../../models/doctor.dart';
+import '../../../../models/doctor.dart';
 import 'add_edit_doctor_screen.dart';
 
 class AdminDoctorScreen extends StatefulWidget {

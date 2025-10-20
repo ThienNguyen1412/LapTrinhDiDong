@@ -2,7 +2,7 @@
 
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../../models/doctor.dart';
+import '../../../../models/doctor.dart';
 
 class AddEditDoctorScreen extends StatefulWidget {
   // We can pass an existing doctor to edit, or null to add a new one

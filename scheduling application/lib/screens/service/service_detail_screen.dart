@@ -2,50 +2,26 @@
 
 import 'package:flutter/material.dart';
 import '../../models/health_package.dart';
-import '../../models/doctor.dart';
 import '../../models/notification.dart';
 // ✨ 1. THÊM IMPORT NÀY ĐỂ CÓ THỂ SỬ DỤNG BookingDetails và BookingFormModal
-import '../home/details_screen.dart';
+import 'service_booking_screen.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final HealthPackage healthPackage;
   // ✨ 2. CẬP NHẬT "CHỮ KÝ" (SIGNATURE) CỦA HÀM TẠI ĐÂY
-  final void Function(Doctor, BookingDetails) onBookAppointment;
+
   final Function(AppNotification) addNotification;
 
   const ServiceDetailScreen({
     super.key,
     required this.healthPackage,
-    required this.onBookAppointment,
+
     required this.addNotification,
   });
 
   // ✨ 3. THAY THẾ HÀM `_bookService` BẰNG HÀM HIỂN THỊ FORM ĐẶT LỊCH
   // Tái sử dụng lại logic từ `DetailsScreen` để đảm bảo tính nhất quán
-  void _showBookingForm(BuildContext context) {
-    // Vì gói khám không gắn với 1 bác sĩ cụ thể, ta sẽ giả định chọn bác sĩ đầu tiên
-    // Trong thực tế, bạn có thể có logic phức tạp hơn ở đây
-    final Doctor associatedDoctor = Doctor.getDoctors().first;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: BookingFormModal(
-          doctor: associatedDoctor, // Truyền bác sĩ giả định vào form
-          onConfirm: (bookingDetails) {
-            Navigator.pop(ctx); // Đóng modal
-            // Gọi hàm onBookAppointment với đầy đủ thông tin
-            onBookAppointment(associatedDoctor, bookingDetails);
-          },
-        ),
-      ),
-    );
-  }
+ 
 
   // Hàm xây dựng danh sách các bước khám (giữ nguyên)
   Widget _buildStepsList() {
@@ -187,7 +163,19 @@ class ServiceDetailScreen extends StatelessWidget {
         child: ElevatedButton.icon(
           icon: const Icon(Icons.calendar_today_outlined),
           label: const Text('ĐẶT DỊCH VỤ NGAY'),
-          onPressed: () => _showBookingForm(context), // ✨ GỌI HÀM MỚI
+          onPressed: (){
+
+            // Điều hướng sang màn hình ServiceBookingScreen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (ctx) => ServiceBookingScreen(
+                  healthPackage: healthPackage, // Truyền gói khám
+                  addNotification: addNotification, // Truyền hàm callback
+                ),
+              ),
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green.shade600,
             foregroundColor: Colors.white,

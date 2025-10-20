@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 // ✨ SỬA LỖI: Import model và sử dụng bí danh 'model' để tránh xung đột
-import '../../../models/appointment.dart' as model; 
+import '../../../../models/appointment.dart' as model; 
 
 /// Màn hình quản lý các lịch hẹn (dành cho Admin)
 class AdminAppointmentScreen extends StatefulWidget {

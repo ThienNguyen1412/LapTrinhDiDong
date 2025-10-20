@@ -9,14 +9,19 @@ import '../notification/notification_screen.dart';
 import '../../models/doctor.dart';
 import '../appointment/book_new_appointment_screen.dart';
 import 'details_screen.dart'; // Import để có thể sử dụng BookingDetails
+import 'lookup/lookup_results_screen.dart';
+import 'guide/guide_screen.dart';
+import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart'; // ✨ THÊM MỚI: Import VietMap
 
 // Dữ liệu cho các mục trong lưới tính năng
 class FeatureItem {
   final IconData icon;
   final String label;
   final String id;
+  
 
   const FeatureItem({required this.icon, required this.label, required this.id});
+  
 }
 
 class HomeScreen extends StatefulWidget {
@@ -40,6 +45,10 @@ class _HomeScreenState extends State<HomeScreen> {
   late final PageController _pageController;
   Timer? _bannerTimer;
   int _currentPage = 0;
+
+  VietmapController? _mapController;
+  final LatLng _hospitalLocation =
+      const LatLng(10.7769, 106.7009);
 
   final List<String> _bannerImages = [
     'https://cdn.phenikaamec.com/phenikaa-mec/image/5-14-2025/6d9f06a3-13cb-4b9a-97a8-84b7b51c9eff-image.webp',
@@ -133,6 +142,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             );
+                            } else if (feature.id == 'lookup_results') {
+                            // THÊM LOGIC MỚI CHO 'lookup_results'
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LookupResultsScreen(),
+                              ),
+                            );
+                            } else if (feature.id == 'guide') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const GuideScreen(),
+                              ),
+                            );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Chức năng "${feature.label.replaceAll('\n', ' ')}" sắp ra mắt!')),
@@ -159,7 +183,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+
               _buildPartnershipBanner(),
+              // ✨ --- THÊM PHẦN BẢN ĐỒ VIETMAP TẠI ĐÂY --- ✨
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.only(left: 4.0),
+                child: Text(
+                  'VỊ TRÍ BỆNH VIỆN',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildVietMap(),
+              // ✨ --- KẾT THÚC PHẦN THÊM MỚI --- ✨
             ],
           ),
         ),
@@ -337,6 +378,44 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  // ✨ --- THÊM WIDGET MỚI ĐỂ HIỂN THỊ BẢN ĐỒ --- ✨
+  Widget _buildVietMap() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias, // Để bo góc cả bản đồ bên trong
+      child: SizedBox(
+        height: 200,
+        child: VietmapGL(
+          apikey: '506862bb03a3d71632bdeb7674a3625328cb7e5a9b011841',
+          styleString: "vietmap://styles/vietmap_vector",
+          initialCameraPosition: CameraPosition(
+            target: _hospitalLocation,
+            zoom: 15.0,
+          ),
+          onMapCreated: (VietmapController controller) {
+            // Lưu controller và thêm marker
+            if (mounted) {
+              setState(() {
+                _mapController = controller;
+              });
+              _mapController?.addSymbol(
+                SymbolOptions(
+                  geometry: _hospitalLocation,
+                  iconImage: "vietmap_marker", // icon marker mặc định
+                  iconSize: 1.5,
+                ),
+              );
+            }
+          },
+          scrollGesturesEnabled: false, // Tắt cuộn map bằng tay
+          zoomGesturesEnabled: false, // Tắt zoom map bằng tay
+          myLocationEnabled: false, // Tắt hiển thị vị trí của tôi
+        ),
+      ),
+    );
+  }
+  // ✨ --- KẾT THÚC WIDGET MỚI --- ✨
   
   void _showNotificationBottomSheet(BuildContext context) {
     final sortedNotifications = List<AppNotification>.from(widget.notifications)

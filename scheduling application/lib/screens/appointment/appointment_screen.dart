@@ -13,6 +13,7 @@ class AppointmentScreen extends StatelessWidget {
   final Function(model.Appointment) onDelete;
   final Function(model.Appointment) onEdit;
   final void Function(Doctor, BookingDetails) onBookAppointment;
+  
 
   const AppointmentScreen({
     super.key,

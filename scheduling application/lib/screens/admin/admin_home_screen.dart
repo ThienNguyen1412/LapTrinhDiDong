@@ -2,9 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../data/mock_database.dart'; 
+import '../../../data/mock_database.dart'; 
 import 'admin_appointment/admin_appointment_screen.dart'; 
 import 'admin_doctor/admin_doctor_screen.dart';
+import 'admin_service/admin_service_screen.dart';
 
 // ----------------------------------------------------
 // 1. Màn hình chính Admin Home
@@ -72,7 +73,13 @@ class _AdminDashboardHomeState extends State<_AdminDashboardHome> {
          'icon': Icons.medical_services,
           'body':const AdminDoctorScreen()},
       {'title': 'Quản lý Người dùng', 'icon': Icons.people, 'body': PlaceholderScreen.create('Quản lý Người dùng', Colors.orange)},
-      {'title': 'Quản lý Dịch vụ/Gói khám', 'icon': Icons.business_center, 'body': PlaceholderScreen.create('Quản lý Dịch vụ/Gói khám', Colors.purple)},
+
+      
+      {'title': 'Quản lý Dịch vụ/Gói khám',
+       'icon': Icons.business_center,
+       'body': const AdminServiceScreen()},
+       
+ 
       {'title': 'Quản lý Hồ sơ (Website)', 'icon': Icons.settings, 'body': PlaceholderScreen.create('Quản lý Hồ sơ', Colors.black54)},
     ];
   }

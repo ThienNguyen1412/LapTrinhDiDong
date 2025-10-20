@@ -46,6 +46,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _notifications.add(notification);
     });
+    if (notification.title.contains('dịch vụ')) {
+    // Nếu là thông báo dịch vụ, chuyển về tab Dịch vụ (index 2)
+    _onItemTapped(2); 
+  } else if (notification.title.contains('đặt lịch')) {
+    // Nếu là thông báo đặt bác sĩ, chuyển về tab Lịch hẹn (index 1)
+    _onItemTapped(1);
+  }
   }
 
   void _addAppointment(Doctor doctor, BookingDetails details) {
@@ -84,6 +91,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _onItemTapped(1);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✅ Yêu cầu đặt lịch đã gửi đi. Vui lòng chờ xác nhận.')),
+    );
+    _onItemTapped(2);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✅ Yêu cầu đặt lịch dịch vụ đã gửi đi. Vui lòng chờ xác nhận.')),
     );
   }
 
@@ -139,7 +150,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onBookAppointment: (doctor, details) => _addNotificationForAppointment(doctor, details),
       ),
       ServiceScreen(
-        onBookAppointment: (doctor, details) => _addNotificationForAppointment(doctor, details),
         unreadNotifications: _notifications,
         markNotificationAsRead: _markNotificationAsRead,
         addNotification: _addNotification,

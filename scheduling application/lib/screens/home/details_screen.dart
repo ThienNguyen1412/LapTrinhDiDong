@@ -37,13 +37,6 @@ class DetailsScreen extends StatelessWidget {
               
               // ✨ SỬA LỖI QUAN TRỌNG: Truyền cả `doctor` và `bookingDetails` lên trên
               onBookAppointment(doctor, bookingDetails); 
-              
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Đã gửi yêu cầu đặt lịch với Bác sĩ ${doctor.name}.'),
-                  duration: const Duration(seconds: 3),
-                ),
-              );
             },
           ),
         );

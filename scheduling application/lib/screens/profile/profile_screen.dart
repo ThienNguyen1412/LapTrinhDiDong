@@ -1,174 +1,217 @@
+// File: lib/screens/profile/profile_screen.dart
+
 import 'package:flutter/material.dart';
-// 💥 Import màn hình Admin Dashboard (Giả định)
-import '../admin_home_screen.dart'; 
+import 'update_profile_screen.dart'; 
+import 'change_password_screen.dart';
+import 'support_screen.dart';
+import '../../data/user_profile_service.dart';
 
-class ProfileScreen extends StatelessWidget {
-  // 💥 Cờ giả định để kiểm tra quyền Admin
-  final bool isAdmin = true; // Đặt là true để thấy nút
-
+// ✨ CHUYỂN THÀNH STATEFULWIDGET
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Thông tin mẫu
-    const String name = 'Nguyễn Minh Thiện (Admin)';
-    const String email = 'thiennguyen@gmail.com';
-    const String phone = '0901 234 567';
-    const String avatarUrl =
-        'https://img.lovepik.com/free-png/20220101/lovepik-tortoise-png-image_401154498_wh860.png';
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-    // Danh sách chức năng cơ bản
+class _ProfileScreenState extends State<ProfileScreen> {
+  // ✨ TẠO HÀM ĐIỀU HƯỚNG VÀ CHỜ KẾT QUẢ
+  void _navigateToUpdateProfile() async {
+    // Chờ kết quả trả về từ màn hình UpdateProfileScreen
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (c) => const UpdateProfileScreen()),
+    );
+
+    // Nếu kết quả trả về là `true` (tức là đã lưu thành công)
+    if (result == true && mounted) {
+      // Gọi setState để build lại giao diện và hiển thị dữ liệu mới
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cập nhật thông tin thành công!'), backgroundColor: Colors.green),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // ✨ LẤY DỮ LIỆU ĐỘNG TỪ KHO DỮ LIỆU
+    final user = UserProfileService.instance;
+
     final List<_ProfileFeature> features = [
       _ProfileFeature(
-        icon: Icons.edit,
+        icon: Icons.person_outline,
         title: 'Cập nhật thông tin',
-        onTap: () {
-          Navigator.pushNamed(context, '/update_profile');
-        },
+        // ✨ GỌI HÀM ĐIỀU HƯỚNG MỚI
+        onTap: _navigateToUpdateProfile,
       ),
       _ProfileFeature(
-        icon: Icons.lock_reset,
+        icon: Icons.lock_outline,
         title: 'Đổi mật khẩu',
         onTap: () {
-          Navigator.pushNamed(context, '/change_password');
+           Navigator.push(context, MaterialPageRoute(builder: (c) => const ChangePasswordScreen()));
         },
       ),
       _ProfileFeature(
-        icon: Icons.support_agent,
-        title: 'Hỗ trợ',
+        icon: Icons.support_agent_outlined,
+        title: 'Hỗ trợ & Trợ giúp',
         onTap: () {
-          Navigator.pushNamed(context, '/support');
+           Navigator.push(context, MaterialPageRoute(builder: (c) => const SupportScreen()));
         },
+      ),
+       _ProfileFeature(
+        icon: Icons.policy_outlined,
+        title: 'Điều khoản & Chính sách',
+        onTap: () {},
       ),
     ];
 
-    // 💥 Thêm chức năng Admin nếu là Admin
-    if (isAdmin) {
-      features.insert(0, 
-        _ProfileFeature(
-          icon: Icons.admin_panel_settings,
-          title: 'Truy Cập Admin Dashboard',
-          onTap: () {
-            // Điều hướng tới màn hình Admin Dashboard
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (c) => const AdminHomeScreen(),
-              ),
-            );
-          },
-          // 💥 Tùy chỉnh màu sắc để nổi bật
-          color: Colors.red.shade700, 
-        ),
-      );
-    }
-
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Hồ sơ'),
-        backgroundColor: Colors.teal, // Thống nhất màu sắc AppBar
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Quay lại đăng nhập',
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login', // Giả định route đăng nhập là '/login'
-                (route) => false,
-              );
-            },
-          ),
-        ],
+        title: const Text('Hồ Sơ Của Tôi'),
+        backgroundColor: Colors.blue.shade800,
+        elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Phần Thông tin người dùng (Giữ nguyên)
-            Card(
-              elevation: 4,
-              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      radius: 48,
-                      backgroundImage: NetworkImage(avatarUrl),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      email,
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.phone, size: 18, color: Colors.teal),
-                        const SizedBox(width: 6),
-                        Text(phone, style: const TextStyle(fontSize: 16)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            // ✨ TRUYỀN DỮ LIỆU ĐỘNG VÀO HEADER
+            _buildUserInfoHeader(
+              name: user.name, 
+              email: user.email, 
+              avatarUrl: user.avatarUrl
             ),
-            // Các chức năng (Đã cập nhật)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: features.map((feature) {
-                  return Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      leading: Icon(feature.icon, color: feature.color ?? Colors.teal), // Sử dụng màu tùy chỉnh
-                      title: Text(
-                        feature.title, 
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: feature.color != null ? FontWeight.bold : FontWeight.normal,
-                          color: feature.color ?? Colors.black, // Sử dụng màu tùy chỉnh
-                        ),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => feature.onTap(),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
+            
+            const SizedBox(height: 20),
+            _buildFeaturesList(features),
+            const SizedBox(height: 20),
+            _buildLogoutButton(context),
+            const SizedBox(height: 20),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ... (Các hàm _buildUserInfoHeader, _buildFeaturesList, _buildLogoutButton giữ nguyên)
+  Widget _buildUserInfoHeader({required String name, required String email, required String avatarUrl}) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade800,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 40,
+            backgroundColor: Colors.white,
+            backgroundImage: NetworkImage(avatarUrl),
+             onBackgroundImageError: (e, s) { /* Xử lý lỗi tải ảnh */ },
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  email,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturesList(List<_ProfileFeature> features) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: features.length,
+          itemBuilder: (context, index) {
+            final feature = features[index];
+            return ListTile(
+              leading: Icon(feature.icon, color: Colors.blue.shade700),
+              title: Text(feature.title, style: const TextStyle(fontSize: 16)),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+              onTap: feature.onTap,
+            );
+          },
+          separatorBuilder: (context, index) => const Divider(height: 1, indent: 16, endIndent: 16),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildLogoutButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Card(
+         elevation: 2,
+         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: ListTile(
+          leading: const Icon(Icons.logout, color: Colors.red),
+          title: const Text(
+            'Đăng xuất',
+            style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          onTap: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Xác nhận Đăng xuất'),
+                content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('Không'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                    },
+                    child: const Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-// Model chức năng (ĐÃ CẬP NHẬT THÊM THUỘC TÍNH MÀU SẮC)
 class _ProfileFeature {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  final Color? color; // 💥 Thêm thuộc tính màu sắc
 
   _ProfileFeature({
     required this.icon,
     required this.title,
     required this.onTap,
-    this.color, // Có thể null
   });
 }
